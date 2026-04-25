@@ -39,7 +39,6 @@ body{
 <div id="buttons"></div>
 
 <div id="map">
-
 <?xml version="1.0" encoding="utf-8"?>
 <svg class="geolonia-svg-map" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
   <title>Japanese Prefectures</title>
@@ -251,32 +250,20 @@ body{
   </g>
 </svg>
 
-
 </div>
 
 <button onclick="generateImage()">画像生成</button>
 
 <script>
-// 都道府県名
-const prefNames = {
- "01":"北海道","02":"青森","03":"岩手","04":"宮城","05":"秋田","06":"山形","07":"福島",
- "08":"茨城","09":"栃木","10":"群馬","11":"埼玉","12":"千葉","13":"東京","14":"神奈川",
- "15":"新潟","16":"富山","17":"石川","18":"福井","19":"山梨","20":"長野","21":"岐阜",
- "22":"静岡","23":"愛知","24":"三重","25":"滋賀","26":"京都","27":"大阪","28":"兵庫",
- "29":"奈良","30":"和歌山","31":"鳥取","32":"島根","33":"岡山","34":"広島","35":"山口",
- "36":"徳島","37":"香川","38":"愛媛","39":"高知",
- "40":"福岡","41":"佐賀","42":"長崎","43":"熊本","44":"大分","45":"宮崎","46":"鹿児島","47":"沖縄"
-};
-
 // 北から順
-const prefOrder = [
- "01","02","03","04","05","06","07",
- "08","09","10","11","12","13","14",
- "15","16","17","18","19","20","21",
- "22","23","24","25","26","27","28",
- "29","30","31","32","33","34","35",
- "36","37","38","39",
- "40","41","42","43","44","45","46","47"
+const prefList = [
+ ["01","北海道"],["02","青森"],["03","岩手"],["04","宮城"],["05","秋田"],["06","山形"],["07","福島"],
+ ["08","茨城"],["09","栃木"],["10","群馬"],["11","埼玉"],["12","千葉"],["13","東京"],["14","神奈川"],
+ ["15","新潟"],["16","富山"],["17","石川"],["18","福井"],["19","山梨"],["20","長野"],["21","岐阜"],
+ ["22","静岡"],["23","愛知"],["24","三重"],["25","滋賀"],["26","京都"],["27","大阪"],["28","兵庫"],
+ ["29","奈良"],["30","和歌山"],["31","鳥取"],["32","島根"],["33","岡山"],["34","広島"],["35","山口"],
+ ["36","徳島"],["37","香川"],["38","愛媛"],["39","高知"],
+ ["40","福岡"],["41","佐賀"],["42","長崎"],["43","熊本"],["44","大分"],["45","宮崎"],["46","鹿児島"],["47","沖縄"]
 ];
 
 // 色
@@ -284,14 +271,26 @@ const colors = ["#EEEEEE", "#ff9ecb", "#6fa8ff", "#7ed957", "#000"];
 
 const btnArea = document.getElementById("buttons");
 
+// 保存キー
+const STORAGE_KEY = "prefStates";
+
+// 保存データ取得
+function loadState(){
+  return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+}
+
+// 保存
+function saveState(data){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
 window.onload = () => {
 
-  // 保存データ取得
-  const saved = JSON.parse(localStorage.getItem("prefStates") || "{}");
+  const saved = loadState();
 
-  // 地図初期化（復元）
+  // 地図初期化
   document.querySelectorAll(".prefecture").forEach(p=>{
-    const code = p.dataset.code.padStart(2,"0");
+    const code = String(p.dataset.code).padStart(2,"0");
     const state = saved[code] ?? 0;
 
     p.dataset.state = state;
@@ -299,40 +298,34 @@ window.onload = () => {
   });
 
   // ボタン生成
-  prefOrder.forEach(code=>{
-    const name = prefNames[code];
+  prefList.forEach(([code,name])=>{
 
     const btn = document.createElement("button");
 
-    const state = saved[code] ?? 0;
+    let state = saved[code] ?? 0;
     btn.textContent = `${name} (${state})`;
 
     btn.onclick = ()=>{
-      const prefs = document.querySelectorAll(`.prefecture[data-code="${code}"]`);
-      if(!prefs.length) return;
+      const pref = document.querySelector(`.prefecture[data-code="${parseInt(code)}"]`);
+      if(!pref) return;
 
-      let state = parseInt(prefs[0].dataset.state || 0);
+      let state = parseInt(pref.dataset.state);
       state = (state + 1) % colors.length;
 
-      prefs.forEach(pref=>{
-        pref.dataset.state = state;
-        pref.style.fill = colors[state];
-      });
+      pref.dataset.state = state;
+      pref.style.fill = colors[state];
 
       btn.textContent = `${name} (${state})`;
 
-      // ⭐ 保存処理
+      // 保存
       saved[code] = state;
-      localStorage.setItem("prefStates", JSON.stringify(saved));
+      saveState(saved);
     };
 
     btnArea.appendChild(btn);
   });
 };
 
-    btnArea.appendChild(btn);
-  });
-};
 
 // 画像生成
 function generateImage(){
