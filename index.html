@@ -60,6 +60,8 @@ h3 { margin:10px 0; }
   width:100%;
   max-width:800px;
   height: auto;
+  display: block;
+  margin: auto;
 }
 </style>
 </head>
@@ -75,11 +77,12 @@ h3 { margin:10px 0; }
 </div>
 
 <div id="map">
-
-  <!-- ★ここが重要：id追加済み -->
-<svg id="japan-svg" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
-  
-  <!-- 日本地図SVG（簡易版パスデータ） -->
+  <!-- 
+    SVGの id は "japan-svg" にしてください。
+    viewBox はお持ちのSVGに合わせて調整してください（例: "0 0 1000 1000" など）
+  -->
+  <svg id="japan-svg" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+    
 <?xml version="1.0" encoding="utf-8"?>
 <svg class="geolonia-svg-map" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
   <title>Japanese Prefectures</title>
@@ -310,14 +313,28 @@ const STORAGE_KEY="prefStates";
 function loadState(){return JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");}
 function saveState(d){localStorage.setItem(STORAGE_KEY,JSON.stringify(d));}
 
-function updateDisplay(code,state){
-  const g=document.querySelector(`g[data-code="${code}"]`);
-  if(g){
-    g.querySelectorAll("path").forEach(e => {
-        e.setAttribute("fill", colors[state]);
-        e.style.fill = colors[state];
+// 色が変わらない県がある対策を施した表示更新関数
+function updateDisplay(code, state) {
+  const el = document.querySelector(`[data-code="${code}"]`);
+  if (!el) return;
+
+  const color = colors[state];
+  
+  // 対象の要素（自分自身とすべての子要素）に色を適用
+  const applyColor = (target) => {
+    const tags = ["path", "polygon", "circle", "ellipse", "rect"];
+    if (tags.includes(target.tagName.toLowerCase())) {
+      target.setAttribute("fill", color);
+      target.style.setProperty("fill", color, "important");
+    }
+    // 子要素も再帰的にチェック
+    target.querySelectorAll(tags.join(",")).forEach(child => {
+      child.setAttribute("fill", color);
+      child.style.setProperty("fill", color, "important");
     });
-  }
+  };
+
+  applyColor(el);
 }
 
 window.onload=()=>{
@@ -350,23 +367,27 @@ function resetAll(){
 
 function generateImage(){
   const svg = document.getElementById("japan-svg");
+  if(!svg) return;
+
   const canvas = document.createElement("canvas");
   canvas.width = 1280;
   canvas.height = 720;
   const ctx = canvas.getContext("2d");
 
+  // SVGデータを安全にシリアライズ
   const svgData = new XMLSerializer().serializeToString(svg);
   const svgBase64 = btoa(unescape(encodeURIComponent(svgData)));
   const img = new Image();
 
   img.onload = () => {
+    // 1. 背景白塗り
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // 地図描画
+    // 2. 地図描画（中央付近に配置）
     ctx.drawImage(img, 100, 80, 1080, 580);
 
-    // 文字入れ
+    // 3. メインタイトル
     ctx.font = "bold 40px sans-serif";
     ctx.lineJoin = "round";
     ctx.lineWidth = 8;
@@ -375,21 +396,26 @@ function generateImage(){
     ctx.fillStyle = "blue";
     ctx.fillText("勇者紋章４７都道府県から集めるまでおわれません！！", 40, 60);
 
+    // 4. サブタイトル
     ctx.font = "bold 30px sans-serif";
     ctx.fillStyle = "deeppink";
     ctx.textAlign = "center";
     ctx.fillText("２６日23:30～予約バトル！", canvas.width / 2, 700);
 
-    // 保存処理
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = `japan_map_${Date.now()}.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    alert("保存を開始しました。ダウンロードフォルダを確認してください。");
+    // 5. 保存実行
+    try {
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `japan_map_${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      alert("画像を生成しました。保存されない場合は表示された画面を長押ししてください。");
+    } catch (e) {
+      alert("エラー: " + e.message);
+    }
   };
 
   img.src = "data:image/svg+xml;base64," + svgBase64;
