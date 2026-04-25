@@ -38,18 +38,19 @@ h3 { margin:10px 0; }
 
 .btn {
   flex:1;
-  min-width: 140px;
+  min-width: 120px;
   padding: 12px 5px;
   font-weight:bold;
   color:#fff;
   border:none;
   border-radius:6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
 }
 
-.generate-btn { background:#2ea44f; }
-.narrow-btn { background:#007bff; } 
+.gen-full { background:#2ea44f; } /* 通常保存 */
+.gen-13 { background:#007bff; }   /* 1:3保存 */
+.gen-12 { background:#6f42c1; }   /* 1:2保存 */
 .reset-btn { background:#d73a49; }
 
 #map {
@@ -75,8 +76,9 @@ h3 { margin:10px 0; }
 <div id="buttons"></div>
 
 <div class="control-panel">
-  <button class="btn generate-btn" onclick="generateImage(false)">画像保存(タイトル有)</button>
-  <button class="btn narrow-btn" onclick="generateImage(true)">画像のみ保存(1:3 自動フィット)</button>
+  <button class="btn gen-full" onclick="generateImage('full')">保存(タイトル有)</button>
+  <button class="btn gen-13" onclick="generateImage('1:3')">画像(1:3)</button>
+  <button class="btn gen-12" onclick="generateImage('1:2')">画像(1:2)</button>
   <button class="btn reset-btn" onclick="resetAll()">リセット</button>
 </div>
 
@@ -359,18 +361,20 @@ function resetAll(){
   location.reload();
 }
 
-function generateImage(isNarrow){
+function generateImage(mode){
   const svg = document.getElementById("japan-svg");
   if(!svg) return;
 
   const canvas = document.createElement("canvas");
   
-  if(isNarrow) {
-    // 1:3比率
+  // モードに合わせてキャンバスサイズを設定
+  if(mode === '1:3') {
     canvas.width = 1800;
     canvas.height = 600;
+  } else if(mode === '1:2') {
+    canvas.width = 1200;
+    canvas.height = 600;
   } else {
-    // 通常比率
     canvas.width = 1280;
     canvas.height = 720;
   }
@@ -381,27 +385,14 @@ function generateImage(isNarrow){
   const img = new Image();
 
   img.onload = () => {
-    // 背景を白で塗る
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // 画像とキャンバスの比率から、最適な倍率（scale）を計算
-    // Math.minを使うことで、上下左右どちらもはみ出さない最大サイズになる
-    const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-    
-    // 倍率に基づいた描画サイズ
-    const drawWidth = img.width * scale;
-    const drawHeight = img.height * scale;
-    
-    // 常に中央へ配置するためのオフセット計算
-    const offsetX = (canvas.width - drawWidth) / 2;
-    const offsetY = (canvas.height - drawHeight) / 2;
-
-    if(isNarrow) {
-      // 1:3比率（文字なし・自動フィット）
-      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+    if(mode === '1:3' || mode === '1:2') {
+      // 比率を無視して、キャンバスの上下左右いっぱいに引き伸ばして描画
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     } else {
-      // 通常（文字あり：従来のレイアウトを維持）
+      // 通常（タイトルあり）：比率をある程度保って中央付近に配置
       ctx.drawImage(img, 100, 80, 1080, 580);
       
       // テキスト描画
@@ -419,12 +410,12 @@ function generateImage(isNarrow){
       const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
       const link = document.createElement("a");
       link.href = dataUrl;
-      link.download = `japan_map_${isNarrow ? 'narrow' : 'full'}_${Date.now()}.jpg`;
+      link.download = `japan_map_${mode.replace(':', '')}_${Date.now()}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (e) {
-      alert("保存に失敗しました。画像を長押しして保存してください。");
+      alert("保存エラーが発生しました。");
     }
   };
 
