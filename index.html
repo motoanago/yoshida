@@ -76,7 +76,7 @@ h3 { margin:10px 0; }
 
 <div class="control-panel">
   <button class="btn generate-btn" onclick="generateImage(false)">画像保存(タイトル有)</button>
-  <button class="btn narrow-btn" onclick="generateImage(true)">画像のみ保存(1:3引き伸ばし)</button>
+  <button class="btn narrow-btn" onclick="generateImage(true)">画像のみ保存(1:3 自動フィット)</button>
   <button class="btn reset-btn" onclick="resetAll()">リセット</button>
 </div>
 
@@ -366,10 +366,11 @@ function generateImage(isNarrow){
   const canvas = document.createElement("canvas");
   
   if(isNarrow) {
-    // 縦1:横3 比率 (横1800 x 縦600)
+    // 1:3比率
     canvas.width = 1800;
     canvas.height = 600;
   } else {
+    // 通常比率
     canvas.width = 1280;
     canvas.height = 720;
   }
@@ -380,32 +381,37 @@ function generateImage(isNarrow){
   const img = new Image();
 
   img.onload = () => {
+    // 背景を白で塗る
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // 画像とキャンバスの比率から、最適な倍率（scale）を計算
+    // Math.minを使うことで、上下左右どちらもはみ出さない最大サイズになる
+    const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+    
+    // 倍率に基づいた描画サイズ
+    const drawWidth = img.width * scale;
+    const drawHeight = img.height * scale;
+    
+    // 常に中央へ配置するためのオフセット計算
+    const offsetX = (canvas.width - drawWidth) / 2;
+    const offsetY = (canvas.height - drawHeight) / 2;
+
     if(isNarrow) {
-      // 1:3比率：地図を横幅いっぱいに引き伸ばして描画
-      // 地図の上下を少しカットするような形で横長にフィットさせます
-      const drawWidth = canvas.width;
-      const drawHeight = (img.height / img.width) * drawWidth;
-      
-      // 中央に配置（上下に少しはみ出す、または余白ができる状態を調整）
-      const offsetY = (canvas.height - drawHeight) / 2;
-      ctx.drawImage(img, 0, offsetY, drawWidth, drawHeight);
+      // 1:3比率（文字なし・自動フィット）
+      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
     } else {
-      // 通常：文字あり
+      // 通常（文字あり：従来のレイアウトを維持）
       ctx.drawImage(img, 100, 80, 1080, 580);
       
+      // テキスト描画
       ctx.font = "bold 40px sans-serif";
       ctx.lineJoin = "round"; ctx.lineWidth = 8;
-      ctx.strokeStyle = "gold";
-      ctx.strokeText("勇者紋章４７都道府県から集めるまでおわれません！！", 40, 60);
-      ctx.fillStyle = "blue";
-      ctx.fillText("勇者紋章４７都道府県から集めるまでおわれません！！", 40, 60);
+      ctx.strokeStyle = "gold"; ctx.strokeText("勇者紋章４７都道府県から集めるまでおわれません！！", 40, 60);
+      ctx.fillStyle = "blue"; ctx.fillText("勇者紋章４７都道府県から集めるまでおわれません！！", 40, 60);
 
       ctx.font = "bold 30px sans-serif";
-      ctx.fillStyle = "deeppink";
-      ctx.textAlign = "center";
+      ctx.fillStyle = "deeppink"; ctx.textAlign = "center";
       ctx.fillText("２６日23:30～予約バトル！", canvas.width / 2, 700);
     }
 
@@ -413,12 +419,12 @@ function generateImage(isNarrow){
       const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
       const link = document.createElement("a");
       link.href = dataUrl;
-      link.download = isNarrow ? `map_stretch_${Date.now()}.jpg` : `map_full_${Date.now()}.jpg`;
+      link.download = `japan_map_${isNarrow ? 'narrow' : 'full'}_${Date.now()}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (e) {
-      alert("保存エラー: " + e.message);
+      alert("保存に失敗しました。画像を長押しして保存してください。");
     }
   };
 
