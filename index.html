@@ -48,14 +48,16 @@ h3 { margin:10px 0; }
   font-size: 13px;
 }
 
-.gen-full { background:#2ea44f; } /* 通常保存 */
-.gen-13 { background:#007bff; }   /* 1:3保存 */
-.gen-12 { background:#6f42c1; }   /* 1:2保存 */
+/* ボタン色設定 */
+.gen-full { background:#2ea44f; }
+.gen-13 { background:#007bff; }
+.gen-12 { background:#6f42c1; }
+.gen-trans { background:#ff8c00; } /* オレンジ：透過保存 */
 .reset-btn { background:#d73a49; }
 
 #map {
   margin-top: 20px;
-  background: #fff;
+  background: #add8e6; /* プレビュー用背景色 */
   border: 1px solid #ddd;
   padding: 10px;
 }
@@ -77,15 +79,13 @@ h3 { margin:10px 0; }
 
 <div class="control-panel">
   <button class="btn gen-full" onclick="generateImage('full')">保存(タイトル有)</button>
-  <button class="btn gen-13" onclick="generateImage('1:3')">画像(1:3)</button>
-  <button class="btn gen-12" onclick="generateImage('1:2')">画像(1:2)</button>
+  <button class="btn gen-13" onclick="generateImage('1:3')">画像のみ(1:3)</button>
+  <button class="btn gen-12" onclick="generateImage('1:2')">画像のみ(1:2)</button>
+  <button class="btn gen-trans" onclick="generateImage('trans')">背景透過保存(PNG)</button>
   <button class="btn reset-btn" onclick="resetAll()">リセット</button>
 </div>
 
 <div id="map">
-  <!-- SVGの id は "japan-svg" にしてください -->
-    0 0 1000 1000
-  -->
   <svg id="japan-svg" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
     
 <?xml version="1.0" encoding="utf-8"?>
@@ -367,16 +367,13 @@ function generateImage(mode){
 
   const canvas = document.createElement("canvas");
   
-  // モードに合わせてキャンバスサイズを設定
+  // サイズ設定
   if(mode === '1:3') {
-    canvas.width = 1800;
-    canvas.height = 600;
+    canvas.width = 1800; canvas.height = 600;
   } else if(mode === '1:2') {
-    canvas.width = 1200;
-    canvas.height = 600;
+    canvas.width = 1200; canvas.height = 600;
   } else {
-    canvas.width = 1280;
-    canvas.height = 720;
+    canvas.width = 1280; canvas.height = 720;
   }
   
   const ctx = canvas.getContext("2d");
@@ -385,17 +382,21 @@ function generateImage(mode){
   const img = new Image();
 
   img.onload = () => {
-    ctx.fillStyle = "#add8e6";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // 透過モード以外は背景を水色で塗る
+    if (mode !== 'trans') {
+      ctx.fillStyle = "#add8e6"; 
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+      // 透過モードの場合は背景をクリア（何もしない）
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
     
-    if(mode === '1:3' || mode === '1:2') {
-      // 比率を無視して、キャンバスの上下左右いっぱいに引き伸ばして描画
+    // 画像の描画（透過モードは1:3と同じように全画面引き伸ばしに設定）
+    if(mode === '1:3' || mode === '1:2' || mode === 'trans') {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     } else {
-      // 通常（タイトルあり）：比率をある程度保って中央付近に配置
       ctx.drawImage(img, 100, 80, 1080, 580);
       
-      // テキスト描画
       ctx.font = "bold 40px sans-serif";
       ctx.lineJoin = "round"; ctx.lineWidth = 8;
       ctx.strokeStyle = "gold"; ctx.strokeText("勇者紋章４７都道府県から集めるまでおわれません！！", 40, 60);
@@ -407,10 +408,14 @@ function generateImage(mode){
     }
 
     try {
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+      // 透過モードの場合は image/png を使用
+      const mimeType = mode === 'trans' ? "image/png" : "image/jpeg";
+      const extension = mode === 'trans' ? "png" : "jpg";
+      const dataUrl = canvas.toDataURL(mimeType, 0.9);
+      
       const link = document.createElement("a");
       link.href = dataUrl;
-      link.download = `japan_map_${mode.replace(':', '')}_${Date.now()}.jpg`;
+      link.download = `japan_map_${mode.replace(':', '')}_${Date.now()}.${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
