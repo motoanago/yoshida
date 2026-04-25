@@ -40,7 +40,6 @@ body{
 
 <div id="map">
 
-<!-- ▼ここはそのまま使う -->
 <?xml version="1.0" encoding="utf-8"?>
 <svg class="geolonia-svg-map" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
   <title>Japanese Prefectures</title>
@@ -269,21 +268,32 @@ const prefNames = {
  "40":"福岡","41":"佐賀","42":"長崎","43":"熊本","44":"大分","45":"宮崎","46":"鹿児島","47":"沖縄"
 };
 
+// 北から順
+const prefOrder = [
+ "01","02","03","04","05","06","07",
+ "08","09","10","11","12","13","14",
+ "15","16","17","18","19","20","21",
+ "22","23","24","25","26","27","28",
+ "29","30","31","32","33","34","35",
+ "36","37","38","39",
+ "40","41","42","43","44","45","46","47"
+];
+
 // 色
 const colors = ["#EEEEEE", "#ff9ecb", "#6fa8ff", "#7ed957", "#000"];
 
 const btnArea = document.getElementById("buttons");
 
-// 初期化
 window.onload = () => {
 
+  // 地図初期化
   document.querySelectorAll(".prefecture").forEach(p=>{
     p.dataset.state = 0;
     p.style.fill = colors[0];
   });
 
-  // ボタン生成
-  Object.keys(prefNames).forEach(code=>{
+  // ボタン生成（北から順）
+  prefOrder.forEach(code=>{
     const name = prefNames[code];
 
     const btn = document.createElement("button");
@@ -305,7 +315,6 @@ window.onload = () => {
     btnArea.appendChild(btn);
   });
 };
-
 
 // 画像生成
 function generateImage(){
