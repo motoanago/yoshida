@@ -12,10 +12,10 @@
     --bg-color: #f5f5f5;
   }
 
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-color); text-align: center; color: #333; }
-  h3 { margin: 15px 0; font-size: 1.1rem; }
+  body { margin: 0; font-family: sans-serif; background: var(--bg-color); text-align: center; color: #333; }
+  h3 { margin: 15px 0; }
 
-  /* 都道府県ボタンエリア */
+  /* 都道府県ボタン */
   #buttons {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -32,9 +32,7 @@
     background: #fff;
     border-radius: 6px;
     cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   }
-  #buttons button:active { background: #eee; }
 
   /* 操作パネル */
   .control-panel {
@@ -55,12 +53,11 @@
     border-radius: 8px;
     cursor: pointer;
     color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   .generate-btn { background: var(--primary-color); }
   .reset-btn { background: var(--danger-color); }
 
-  /* 地図エリア（下側に配置） */
+  /* 地図エリア */
   #map-container {
     background: #fff;
     margin-top: 20px;
@@ -72,26 +69,22 @@
     width: 100%;
     height: auto;
     max-width: 800px;
-    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1));
   }
   
-  .prefecture { stroke: #fff; stroke-width: 0.5; transition: fill 0.2s; }
+  .prefecture { stroke: #fff; stroke-width: 0.5; }
 </style>
 </head>
 <body>
 
 <h3>都道府県を選択</h3>
 
-<!-- 1. ボタンエリア（上側） -->
 <div id="buttons"></div>
 
-<!-- 2. 操作系ボタン -->
 <div class="control-panel">
-  <button class="btn generate-btn" onclick="generateImage()">画像を生成</button>
+  <button class="btn generate-btn" onclick="generateImage()">画像を生成して開く</button>
   <button class="btn reset-btn" onclick="resetAll()">リセット</button>
 </div>
 
-<!-- 3. 地図表示（下側） -->
 <div id="map-container">
 <?xml version="1.0" encoding="utf-8"?>
 <svg class="geolonia-svg-map" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
@@ -307,7 +300,6 @@
 </div>
 
 <script>
-// 北から順のリスト
 const prefList = [
   ["01","北海道"],["02","青森"],["03","岩手"],["04","宮城"],["05","秋田"],["06","山形"],["07","福島"],
   ["08","茨城"],["09","栃木"],["10","群馬"],["11","埼玉"],["12","千葉"],["13","東京"],["14","神奈川"],
@@ -321,12 +313,9 @@ const prefList = [
 const colors = ["#EEEEEE", "#ff9ecb", "#6fa8ff", "#7ed957", "#ffeb3b"];
 const STORAGE_KEY = "prefStates";
 
-// 状態読み込み
 function loadState(){ return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
-// 状態保存
 function saveState(data){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
-// 表示更新（地図とボタン）
 function updateDisplay(code, state) {
   const pref = document.querySelector(`.prefecture[data-code="${parseInt(code)}"]`);
   if(pref) pref.style.fill = colors[state];
@@ -356,60 +345,57 @@ window.onload = () => {
   });
 };
 
-// 全リセット
 function resetAll() {
-  if(!confirm("すべてのカウントをリセットしてよろしいですか？")) return;
+  if(!confirm("リセットしますか？")) return;
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
 }
 
-// 画像生成と表示
+// 画像を生成し、新しいタブで画像単体を表示する
 function generateImage(){
   const svg = document.querySelector("#map svg");
   const serializer = new XMLSerializer();
   const source = serializer.serializeToString(svg);
 
   const canvas = document.createElement("canvas");
-  // 横長サイズ (16:9)
-  canvas.width = 1280;
+  canvas.width = 1280; // 横型
   canvas.height = 720;
   const ctx = canvas.getContext("2d");
 
   const img = new Image();
   const svgBlob = new Blob([source], {type:"image/svg+xml;charset=utf-8"});
-  const url = URL.createObjectURL(svgBlob);
+  const svgUrl = URL.createObjectURL(svgBlob);
 
   img.onload = () => {
-    // 背景塗りつぶし
+    // JPG用に背景を白にする
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // SVGを中央に配置
+    // 地図の描画サイズと位置の調整
     const vBox = svg.viewBox.baseVal;
     const scale = Math.min(canvas.width / vBox.width, canvas.height / vBox.height) * 0.85;
     const x = (canvas.width - vBox.width * scale) / 2;
     const y = (canvas.height - vBox.height * scale) / 2;
-    
     ctx.drawImage(img, x, y, vBox.width * scale, vBox.height * scale);
 
-    const pngData = canvas.toDataURL("image/png");
+    // CanvasをJPGのBlobに変換
+    canvas.toBlob((blob) => {
+      const jpgUrl = URL.createObjectURL(blob);
+      
+      // ★新しいタブで画像を開く
+      const newTab = window.open(jpgUrl, '_blank');
+      
+      if(!newTab) {
+        alert("ポップアップがブロックされました。ブラウザの設定で許可するか、長押し保存を利用してください。");
+      }
 
-    // 新しい画面（擬似タブ）として表示
-    document.body.innerHTML = `
-      <div style="margin:0; background:#222; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; padding:20px; box-sizing:border-box;">
-        <h2 style="margin-bottom:10px;">画像が生成されました</h2>
-        <img src="${pngData}" style="max-width:100%; max-height:70vh; border:5px solid white; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-        <p style="margin:20px 0 10px;">スマホ：画像を長押しして保存</p>
-        <p style="margin:0 0 20px;">PC：右クリックから保存</p>
-        <a href="${pngData}" download="japan_map.png" style="display:inline-block; padding:15px 30px; background:${colors[3]}; color:white; text-decoration:none; border-radius:50px; font-weight:bold; margin-bottom:20px;">直接ダウンロード</a>
-        <br>
-        <button onclick="location.reload()" style="padding:10px 20px; background:#666; color:white; border:none; border-radius:5px; cursor:pointer;">編集に戻る</button>
-      </div>
-    `;
+      // メモリ解放（少し待ってから実行）
+      setTimeout(() => URL.revokeObjectURL(jpgUrl), 10000);
+    }, 'image/jpeg', 0.9);
     
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(svgUrl);
   };
-  img.src = url;
+  img.src = svgUrl;
 }
 </script>
 
