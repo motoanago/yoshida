@@ -286,33 +286,48 @@ const btnArea = document.getElementById("buttons");
 
 window.onload = () => {
 
-  // 地図初期化
+  // 保存データ取得
+  const saved = JSON.parse(localStorage.getItem("prefStates") || "{}");
+
+  // 地図初期化（復元）
   document.querySelectorAll(".prefecture").forEach(p=>{
-    p.dataset.state = 0;
-    p.style.fill = colors[0];
+    const code = p.dataset.code.padStart(2,"0");
+    const state = saved[code] ?? 0;
+
+    p.dataset.state = state;
+    p.style.fill = colors[state];
   });
 
-  // ボタン生成（北から順）
+  // ボタン生成
   prefOrder.forEach(code=>{
     const name = prefNames[code];
 
     const btn = document.createElement("button");
-    btn.textContent = `${name} (0)`;
 
-btn.onclick = ()=>{
-  const prefs = document.querySelectorAll(`.prefecture[data-code="${code}"]`);
-  if(!prefs.length) return;
+    const state = saved[code] ?? 0;
+    btn.textContent = `${name} (${state})`;
 
-  let state = parseInt(prefs[0].dataset.state || 0);
-  state = (state + 1) % colors.length;
+    btn.onclick = ()=>{
+      const prefs = document.querySelectorAll(`.prefecture[data-code="${code}"]`);
+      if(!prefs.length) return;
 
-  // 複数パーツ全部に適用
-  prefs.forEach(pref=>{
-    pref.dataset.state = state;
-    pref.style.fill = colors[state];
+      let state = parseInt(prefs[0].dataset.state || 0);
+      state = (state + 1) % colors.length;
+
+      prefs.forEach(pref=>{
+        pref.dataset.state = state;
+        pref.style.fill = colors[state];
+      });
+
+      btn.textContent = `${name} (${state})`;
+
+      // ⭐ 保存処理
+      saved[code] = state;
+      localStorage.setItem("prefStates", JSON.stringify(saved));
+    };
+
+    btnArea.appendChild(btn);
   });
-
-  btn.textContent = `${name} (${state})`;
 };
 
     btnArea.appendChild(btn);
