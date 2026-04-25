@@ -6,93 +6,62 @@
 <title>日本地図訪問カウント</title>
 
 <style>
-  :root {
-    --primary-color: #2ea44f;
-    --danger-color: #d73a49;
-    --bg-color: #f5f5f5;
-  }
+body { margin:0; font-family:sans-serif; background:#f5f5f5; text-align:center; }
+h3 { margin:10px 0; }
 
-  body { margin: 0; font-family: sans-serif; background: var(--bg-color); text-align: center; color: #333; }
-  h3 { margin: 15px 0; font-size: 1.1rem; }
+#buttons {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+  padding:10px;
+  max-width:600px;
+  margin:auto;
+}
 
-  /* 都道府県ボタン：スマホで押しやすい4列 */
-  #buttons {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    padding: 10px;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-  
-  #buttons button {
-    padding: 12px 2px;
-    font-size: 11px;
-    border: 1px solid #ccc;
-    background: #fff;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  #buttons button:active { background: #eee; }
+#buttons button {
+  padding:10px;
+  font-size:11px;
+}
 
-  /* 操作パネル */
-  .control-panel {
-    margin: 15px 0;
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    padding: 0 10px;
-  }
-  
-  .btn {
-    flex: 1;
-    max-width: 200px;
-    padding: 14px 0;
-    font-size: 14px;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    color: white;
-  }
-  .generate-btn { background: var(--primary-color); }
-  .reset-btn { background: var(--danger-color); }
+.control-panel {
+  display:flex;
+  gap:10px;
+  padding:10px;
+}
 
-  /* 地図エリア */
-  #map-container {
-    background: #fff;
-    margin-top: 20px;
-    padding: 30px 10px;
-    border-top: 1px solid #ddd;
-  }
-  
-  #map svg {
-    width: 100%;
-    height: auto;
-    max-width: 800px;
-  }
-  
-  /* SVG内の図形へのスタイル */
-  .prefecture path, .prefecture polygon {
-    transition: fill 0.2s;
-  }
+.btn {
+  flex:1;
+  padding:12px;
+  font-weight:bold;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+}
+
+.generate-btn { background:#2ea44f; }
+.reset-btn { background:#d73a49; }
+
+#map svg {
+  width:100%;
+  max-width:800px;
+}
 </style>
 </head>
+
 <body>
 
 <h3>都道府県を選択</h3>
-
-<!-- 都道府県選択ボタン（上部） -->
 <div id="buttons"></div>
 
-<!-- 操作系ボタン -->
 <div class="control-panel">
-  <button class="btn generate-btn" onclick="generateImage()">画像を生成して開く</button>
+  <button class="btn generate-btn" onclick="generateImage()">画像生成</button>
   <button class="btn reset-btn" onclick="resetAll()">リセット</button>
 </div>
 
-<!-- 日本地図（下部） -->
-<div id="map-container">
+<div id="map">
+<!-- ★ここが重要：id追加済み -->
+<svg id="japan-svg" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+
 <?xml version="1.0" encoding="utf-8"?>
 <svg class="geolonia-svg-map" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
   <title>Japanese Prefectures</title>
@@ -308,120 +277,106 @@
 
 <script>
 const prefList = [
-  ["01","北海道"],["02","青森"],["03","岩手"],["04","宮城"],["05","秋田"],["06","山形"],["07","福島"],
-  ["08","茨城"],["09","栃木"],["10","群馬"],["11","埼玉"],["12","千葉"],["13","東京"],["14","神奈川"],
-  ["15","新潟"],["16","富山"],["17","石川"],["18","福井"],["19","山梨"],["20","長野"],["21","岐阜"],
-  ["22","静岡"],["23","愛知"],["24","三重"],["25","滋賀"],["26","京都"],["27","大阪"],["28","兵庫"],
-  ["29","奈良"],["30","和歌山"],["31","鳥取"],["32","島根"],["33","岡山"],["34","広島"],["35","山口"],
-  ["36","徳島"],["37","香川"],["38","愛媛"],["39","高知"],
-  ["40","福岡"],["41","佐賀"],["42","長崎"],["43","熊本"],["44","大分"],["45","宮崎"],["46","鹿児島"],["47","沖縄"]
+["01","北海道"],
+
+["02","青森"],["03","岩手"],["04","宮城"],["05","秋田"],["06","山形"],["07","福島"],
+
+["08","茨城"],["09","栃木"],["10","群馬"],["11","埼玉"],["12","千葉"],["13","東京"],["14","神奈川"],
+
+["15","新潟"],["16","富山"],["17","石川"],["18","福井"],["19","山梨"],["20","長野"],["21","岐阜"],["22","静岡"],["23","愛知"],
+
+["24","三重"],["25","滋賀"],["26","京都"],["27","大阪"],["28","兵庫"],["29","奈良"],["30","和歌山"],
+
+["31","鳥取"],["32","島根"],["33","岡山"],["34","広島"],["35","山口"],
+
+["36","徳島"],["37","香川"],["38","愛媛"],["39","高知"],
+
+["40","福岡"],["41","佐賀"],["42","長崎"],["43","熊本"],["44","大分"],["45","宮崎"],["46","鹿児島"],
+
+["47","沖縄"]
 ];
 
-const colors = ["#EEEEEE", "#ff9ecb", "#6fa8ff", "#7ed957", "#ffeb3b"];
-const STORAGE_KEY = "prefStates";
+const colors = ["#EEEEEE","#ff9ecb","#6fa8ff","#7ed957","#ffeb3b"];
+const STORAGE_KEY="prefStates";
 
-function loadState(){ return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
-function saveState(data){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function loadState(){return JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");}
+function saveState(d){localStorage.setItem(STORAGE_KEY,JSON.stringify(d));}
 
-// 表示更新（地図の<g>タグ構造に対応）
-function updateDisplay(code, state) {
-  const paddedCode = String(code).padStart(2, "0");
-  
-  // 親の<g>タグを探す
-  const group = document.querySelector(`g[data-code="${paddedCode}"]`);
-  
-  if (group) {
-    // グループ内の全図形の色を変更
-    const shapes = group.querySelectorAll("path, polygon");
-    shapes.forEach(shape => {
-      shape.style.fill = colors[state];
-    });
-  } else {
-    // グループ化されていない場合の直接指定用
-    const direct = document.querySelector(`.prefecture[data-code="${paddedCode}"], [data-code="${paddedCode}"]`);
-    if(direct) direct.style.fill = colors[state];
-  }
-  
-  // ボタン文字更新
-  const btn = document.getElementById(`btn-${code}`);
-  if(btn) {
-    const name = prefList.find(p => p[0] === code)[1];
-    btn.textContent = `${name}(${state})`;
+function updateDisplay(code,state){
+  const g=document.querySelector(`g[data-code="${code}"]`);
+  if(g){
+    g.querySelectorAll("*").forEach(e=>e.style.fill=colors[state]);
   }
 }
 
-window.onload = () => {
-  const saved = loadState();
-  const btnArea = document.getElementById("buttons");
+window.onload=()=>{
+  const saved=loadState();
+  const area=document.getElementById("buttons");
 
-  prefList.forEach(([code, name]) => {
-    const btn = document.createElement("button");
-    btn.id = `btn-${code}`;
-    let state = saved[code] ?? 0;
-    
-    btn.onclick = () => {
-      state = (state + 1) % colors.length;
-      updateDisplay(code, state);
-      saved[code] = state;
+  prefList.forEach(([code,name])=>{
+    let state=saved[code]||0;
+    const btn=document.createElement("button");
+
+    btn.textContent=name+"("+state+")";
+
+    btn.onclick=()=>{
+      state=(state+1)%colors.length;
+      saved[code]=state;
       saveState(saved);
+      updateDisplay(code,state);
+      btn.textContent=name+"("+state+")";
     };
-    
-    btnArea.appendChild(btn);
-    updateDisplay(code, state); // 初期ロード
+
+    area.appendChild(btn);
+    updateDisplay(code,state);
   });
 };
 
-function resetAll() {
-  if(!confirm("すべてのデータをリセットしますか？")) return;
+function resetAll(){
+  if(!confirm("リセットしますか？"))return;
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
 }
 
-// JPG画像を生成して新しいタブで開く
 function generateImage(){
-  const svg = document.getElementById("japan-svg");
-  if (!svg) {
-    alert("エラー: SVG(id='japan-svg')が見つかりません。");
-    return;
-  }
+  const svg=document.getElementById("japan-svg");
+  if(!svg){alert("SVGなし");return;}
 
-  const serializer = new XMLSerializer();
-  const source = serializer.serializeToString(svg);
+  const canvas=document.createElement("canvas");
+  canvas.width=1280;
+  canvas.height=720;
+  const ctx=canvas.getContext("2d");
 
-  const canvas = document.createElement("canvas");
-  canvas.width = 1280;
-  canvas.height = 720;
-  const ctx = canvas.getContext("2d");
+  const img=new Image();
+  const svgData=new XMLSerializer().serializeToString(svg);
+  const url=URL.createObjectURL(new Blob([svgData],{type:"image/svg+xml"}));
 
-  const img = new Image();
-  const svgUrl = URL.createObjectURL(new Blob([source], {type:"image/svg+xml;charset=utf-8"}));
+  img.onload=()=>{
+    ctx.fillStyle="#fff";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  img.onload = () => {
-    // 背景を白に
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img,100,50,1080,600);
 
-    const vBox = svg.viewBox.baseVal;
-    const vWidth = vBox.width || 800;
-    const vHeight = vBox.height || 500;
+    // ▼ タイトル（青＋金縁）
+    ctx.font="bold 40px sans-serif";
+    ctx.lineWidth=8;
+    ctx.strokeStyle="gold";
+    ctx.strokeText("勇者紋章４７都道府県から集めるまでおわれません！！",50,60);
+    ctx.fillStyle="blue";
+    ctx.fillText("勇者紋章４７都道府県から集めるまでおわれません！！",50,60);
 
-    const scale = Math.min(canvas.width / vWidth, canvas.height / vHeight) * 0.85;
-    const x = (canvas.width - vWidth * scale) / 2;
-    const y = (canvas.height - vHeight * scale) / 2;
-    
-    ctx.drawImage(img, x, y, vWidth * scale, vHeight * scale);
+    // ▼ サブ（ピンク）
+    ctx.font="bold 28px sans-serif";
+    ctx.fillStyle="pink";
+    ctx.fillText("２６日23:30～予約バトル！",400,700);
 
-    canvas.toBlob((blob) => {
-      const jpgUrl = URL.createObjectURL(blob);
-      const newTab = window.open(jpgUrl, '_blank');
-      if(!newTab) alert("ブラウザの設定でポップアップを許可してください。");
-      
-      setTimeout(() => URL.revokeObjectURL(jpgUrl), 10000);
-    }, 'image/jpeg', 0.9);
-    
-    URL.revokeObjectURL(svgUrl);
+    canvas.toBlob(b=>{
+      const u=URL.createObjectURL(b);
+      window.open(u);
+    },"image/jpeg",0.9);
   };
-  img.src = svgUrl;
+
+  img.src=url;
 }
 </script>
 
