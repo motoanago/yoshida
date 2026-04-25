@@ -3,40 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>日本地図カウント</title>
+<title>日本地図カウント - 横型画像対応</title>
 
 <style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  background:#f5f5f5;
-  text-align:center;
-}
+  body { margin: 0; font-family: sans-serif; background: #f5f5f5; text-align: center; color: #333; }
+  h3 { margin: 15px 0; }
 
-#map svg{
-  width:100%;
-  max-width:600px;
-}
+  /* 地図エリア */
+  #map { background: #fff; padding: 10px; margin-bottom: 10px; }
+  #map svg { width: 100%; height: auto; max-width: 800px; } /* スマホで見やすく */
+  
+  /* 都道府県パスの基本スタイル */
+  .prefecture { stroke: #fff; stroke-width: 0.5; cursor: pointer; }
+  /* 都道府県名のテキストスタイル */
+  .pref-label { font-size: 10px; pointer-events: none; fill: #333; font-weight: bold; }
 
-#buttons{
-  display:grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap:5px;
-  padding:10px;
-}
+  /* ボタンエリア：スマホでも押しやすいよう調整 */
+  #buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+    padding: 10px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
 
-#buttons button{
-  padding:8px;
-  font-size:12px;
-}
+  button {
+    padding: 10px 5px;
+    font-size: 11px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+  }
+  button:active { background: #ddd; }
+
+  .action-btn {
+    margin: 20px;
+    padding: 15px 30px;
+    font-size: 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: bold;
+  }
 </style>
 </head>
-
 <body>
 
-<h3>都道府県選択</h3>
-
-<div id="buttons"></div>
+<h3>日本地図：訪問カウント</h3>
 
 <div id="map">
 <?xml version="1.0" encoding="utf-8"?>
@@ -252,121 +268,105 @@ body{
 
 </div>
 
-<button onclick="generateImage()">画像生成</button>
+<div id="buttons"></div>
+
+<button class="action-btn" onclick="generateImage()">画像を生成して保存</button>
 
 <script>
-// 北から順
 const prefList = [
- ["01","北海道"],["02","青森"],["03","岩手"],["04","宮城"],["05","秋田"],["06","山形"],["07","福島"],
- ["08","茨城"],["09","栃木"],["10","群馬"],["11","埼玉"],["12","千葉"],["13","東京"],["14","神奈川"],
- ["15","新潟"],["16","富山"],["17","石川"],["18","福井"],["19","山梨"],["20","長野"],["21","岐阜"],
- ["22","静岡"],["23","愛知"],["24","三重"],["25","滋賀"],["26","京都"],["27","大阪"],["28","兵庫"],
- ["29","奈良"],["30","和歌山"],["31","鳥取"],["32","島根"],["33","岡山"],["34","広島"],["35","山口"],
- ["36","徳島"],["37","香川"],["38","愛媛"],["39","高知"],
- ["40","福岡"],["41","佐賀"],["42","長崎"],["43","熊本"],["44","大分"],["45","宮崎"],["46","鹿児島"],["47","沖縄"]
+  ["01","北海道"],["02","青森"],["03","岩手"],["04","宮城"],["05","秋田"],["06","山形"],["07","福島"],
+  ["08","茨城"],["09","栃木"],["10","群馬"],["11","埼玉"],["12","千葉"],["13","東京"],["14","神奈川"],
+  ["15","新潟"],["16","富山"],["17","石川"],["18","福井"],["19","山梨"],["20","長野"],["21","岐阜"],
+  ["22","静岡"],["23","愛知"],["24","三重"],["25","滋賀"],["26","京都"],["27","大阪"],["28","兵庫"],
+  ["29","奈良"],["30","和歌山"],["31","鳥取"],["32","島根"],["33","岡山"],["34","広島"],["35","山口"],
+  ["36","徳島"],["37","香川"],["38","愛媛"],["39","高知"],
+  ["40","福岡"],["41","佐賀"],["42","長崎"],["43","熊本"],["44","大分"],["45","宮崎"],["46","鹿児島"],["47","沖縄"]
 ];
 
-// 色
-const colors = ["#EEEEEE", "#ff9ecb", "#6fa8ff", "#7ed957", "#000"];
-
-const btnArea = document.getElementById("buttons");
-
-// 保存キー
+const colors = ["#EEEEEE", "#ff9ecb", "#6fa8ff", "#7ed957", "#ffeb3b"];
 const STORAGE_KEY = "prefStates";
 
-// 保存データ取得
-function loadState(){
-  return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-}
-
-// 保存
-function saveState(data){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
+function loadState(){ return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+function saveState(data){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
 window.onload = () => {
-
   const saved = loadState();
+  const btnArea = document.getElementById("buttons");
 
-  // 地図初期化
-  document.querySelectorAll(".prefecture").forEach(p=>{
-    const code = String(p.dataset.code).padStart(2,"0");
+  // 初期化：各都道府県の色を適用
+  document.querySelectorAll(".prefecture").forEach(p => {
+    const code = String(p.dataset.code).padStart(2, "0");
     const state = saved[code] ?? 0;
-
-    p.dataset.state = state;
     p.style.fill = colors[state];
   });
 
-  // ボタン生成
-  prefList.forEach(([code,name])=>{
-
+  // 北から順にボタン生成
+  prefList.forEach(([code, name]) => {
     const btn = document.createElement("button");
-
+    const updateBtnText = (c, s) => btn.textContent = `${name} (${s})`;
+    
     let state = saved[code] ?? 0;
-    btn.textContent = `${name} (${state})`;
+    updateBtnText(code, state);
 
-    btn.onclick = ()=>{
-      const pref = document.querySelector(`.prefecture[data-code="${parseInt(code)}"]`);
+    btn.onclick = () => {
+      const pref = document.querySelector(`.prefecture[data-code="${code}"]`);
       if(!pref) return;
 
-      let state = parseInt(pref.dataset.state);
-      state = (state + 1) % colors.length;
-
-      pref.dataset.state = state;
+      state = (parseInt(state) + 1) % colors.length;
       pref.style.fill = colors[state];
+      updateBtnText(code, state);
 
-      btn.textContent = `${name} (${state})`;
-
-      // 保存
       saved[code] = state;
       saveState(saved);
     };
-
     btnArea.appendChild(btn);
   });
 };
 
-
-// 画像生成
+// 横型画像生成（Canvasを横長に設定）
 function generateImage(){
   const svg = document.querySelector("#map svg");
-  const serializer = new XMLSerializer();
-  const source = serializer.serializeToString(svg);
-
+  const svgData = new XMLSerializer().serializeToString(svg);
+  const canvas = document.createElement("canvas");
+  
+  // 横型のサイズ（SNS投稿等に使いやすい比率）
+  canvas.width = 1200; 
+  canvas.height = 800;
+  
+  const ctx = canvas.getContext("2d");
   const img = new Image();
-  const svgBlob = new Blob([source], {type:"image/svg+xml;charset=utf-8"});
+  
+  const svgBlob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
   const url = URL.createObjectURL(svgBlob);
 
-  img.onload = ()=>{
-    const canvas = document.createElement("canvas");
-    canvas.width = 1000;
-    canvas.height = 1000;
+  img.onload = () => {
+    // 背景を白に
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    // SVGを中央に配置するための計算
+    const scale = Math.min(canvas.width / svg.viewBox.baseVal.width, canvas.height / svg.viewBox.baseVal.height) * 0.9;
+    const x = (canvas.width - (svg.viewBox.baseVal.width * scale)) / 2;
+    const y = (canvas.height - (svg.viewBox.baseVal.height * scale)) / 2;
 
-    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    ctx.drawImage(img, x, y, svg.viewBox.baseVal.width * scale, svg.viewBox.baseVal.height * scale);
 
+    // 画像出力
     const png = canvas.toDataURL("image/png");
-
     const w = window.open();
     w.document.write(`
       <html>
-      <body style="margin:0;text-align:center;">
-        <img src="${png}" style="width:100%">
-        <br><br>
-        <a href="${png}" download="map.png">画像を保存</a>
+      <body style="margin:0; background:#333; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh;">
+        <img src="${png}" style="max-width:90%; border:10px solid white; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+        <p style="color:white; font-family:sans-serif;">長押し、または下のリンクから保存してください</p>
+        <a href="${png}" download="japan_map.png" style="color:#007bff; background:white; padding:10px 20px; text-decoration:none; border-radius:5px;">画像をダウンロード</a>
       </body>
       </html>
     `);
-
     URL.revokeObjectURL(url);
   };
-
   img.src = url;
 }
 </script>
-
 </body>
 </html>
