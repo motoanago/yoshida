@@ -299,18 +299,21 @@ window.onload = () => {
     const btn = document.createElement("button");
     btn.textContent = `${name} (0)`;
 
-    btn.onclick = ()=>{
-      const pref = document.querySelector(`.prefecture[data-code="${parseInt(code)}"]`);
-      if(!pref) return;
+btn.onclick = ()=>{
+  const prefs = document.querySelectorAll(`.prefecture[data-code="${code}"]`);
+  if(!prefs.length) return;
 
-      let state = parseInt(pref.dataset.state);
-      state = (state + 1) % colors.length;
+  let state = parseInt(prefs[0].dataset.state || 0);
+  state = (state + 1) % colors.length;
 
-      pref.dataset.state = state;
-      pref.style.fill = colors[state];
+  // 複数パーツ全部に適用
+  prefs.forEach(pref=>{
+    pref.dataset.state = state;
+    pref.style.fill = colors[state];
+  });
 
-      btn.textContent = `${name} (${state})`;
-    };
+  btn.textContent = `${name} (${state})`;
+};
 
     btnArea.appendChild(btn);
   });
