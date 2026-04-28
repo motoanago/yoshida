@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>カオスストーリー完全版</title>
+<style>
+body{
+  margin:0;
+  background:#111;
+  color:#fff;
+  font-family:sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.screen{
+  width:90%;
+  max-width:520px;
+  display:none;
+  opacity:0;
+  transition:opacity .3s;
+}
+
+.active{
+  display:block;
+  opacity:1;
+}
+
+.card{
+  background:#222;
+  padding:20px;
+  border-radius:12px;
+  margin-bottom:20px;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  font-size:15px;
+  border:none;
+  border-radius:8px;
+  background:#444;
+  color:#fff;
+  cursor:pointer;
+}
+
+button:hover{background:#666;}
+
+#finalLog{
+  white-space:pre-line;
+  font-size:14px;
+  line-height:1.6;
+}
+</style>
+</head>
+<body>
+
+<!-- スタート -->
+<div id="startScreen" class="screen active">
+  <div class="card">
+    <h2>カオスストーリー</h2>
+    <button onclick="start()">開始</button>
+  </div>
+</div>
+
+<!-- ゲーム -->
+<div id="gameScreen" class="screen">
+  <div class="card">
+    <div id="scene"></div>
+  </div>
+  <div id="choices"></div>
+</div>
+
+<!-- 終了 -->
+<div id="endScreen" class="screen">
+  <div class="card">
+    <h2 id="ending"></h2>
+    <h3>あなたのストーリー</h3>
+    <div id="finalLog"></div>
+    <button onclick="reset()">もう一度</button>
+  </div>
+</div>
+
+<script>
+// ===== 軸 =====
+const openings = [
+ "あなたは見知らぬ部屋で目を覚ました。",
+ "通勤中、世界が止まった。",
+ "学校に誰もいない。",
+ "逃げ続けている。",
+ "知らない通知が届いた。",
+ "宇宙船の中にいた。",
+ "普通の朝のはずだった。",
+ "時間が巻き戻った。",
+ "知らない街にいる。",
+ "世界が白黒になった。"
+];
+
+// ===== テキスト =====
+const normal = [
+ s=>`${s.location}は静まり返っている。`,
+ s=>`${s.companion || "誰か"}の気配がする。`,
+ ()=>`何かが起こりそうだ。`
+];
+
+const weird = [
+ ()=>`時間がズレている。`,
+ ()=>`同じ感覚が繰り返される。`,
+ ()=>`記憶に違和感がある。`
+];
+
+const chaosText = [
+ ()=>`ペンギンが会議を始めた。`,
+ ()=>`冷蔵庫がこちらを見ている。`,
+ ()=>`現実がバグのように揺れた。`,
+ ()=>`意味だけが残り世界が消えた。`,
+ ()=>`あなたは突然踊り始めた。`
+];
+
+// ===== カオス動詞 =====
+const absurd = [
+ "踊る","飛びだす","転がる","消える","増える","溶ける",
+ "叫びながら回る","逆さまになる","壁になる","時間を食べる",
+ "空気と会話する","突然眠る","分裂する","無になる"
+];
+
+// ===== ハズレ文 =====
+const badMessages = [
+ "その選択は存在しなかった。",
+ "世界が巻き戻った。",
+ "あなたは選ばれる側だった。",
+ "すべてが無効化された。",
+ "その行動は許されていない。"
+];
+
+function rand(arr){
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
+// ===== 状態 =====
+let state, step, maxStep, history;
+
+// ===== 画面 =====
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+// ===== 文章 =====
+function generate(){
+
+  if(Math.random()<0.03){
+    return "あなたは今ゲームをしていることに気づいた。";
+  }
+
+  const r = Math.random();
+  if(r<0.5) return rand(normal)(state);
+  if(r<0.8) return rand(weird)();
+  return rand(chaosText)();
+}
+
+// ===== 選択肢 =====
+function makeChoices(){
+
+  const normal = ["進む","戻る","調べる","話す","逃げる"];
+  const soft = ["少し待つ","様子を見る","気にしない"];
+  const chaos = ["祈る","壊す","食べる","叫ぶ","観察する","記録する","笑う"];
+  const meta = ["最初に戻る","ゲームをやめる"];
+
+  let result = [];
+  let count = 1 + Math.floor(Math.random()*7);
+
+  result.push(rand(normal));
+
+  const pool = [...normal, ...soft, ...chaos, ...absurd];
+
+  while(result.length < count){
+    const r = rand(pool);
+    if(!result.includes(r)) result.push(r);
+  }
+
+  if(Math.random()<0.25){
+    result.push(rand(meta));
+  }
+
+  return result.sort(()=>Math.random()-0.5);
+}
+
+// ===== 状態変化 =====
+function apply(choice){
+
+  if(choice.includes("進む")) state.location="奥";
+  if(choice.includes("戻る")) state.location="元";
+  if(choice.includes("調べる")) state.mystery+=2;
+  if(choice.includes("話す")) state.companion="謎の人物";
+  if(choice.includes("逃げる")) state.tension+=2;
+
+  if(choice.includes("踊る")) state.tension++;
+  if(choice.includes("飛び")) state.tension+=2;
+  if(choice.includes("消える")) state.mystery+=3;
+  if(choice.includes("分裂")) state.tension+=3;
+  if(choice.includes("無になる")) state.mystery+=5;
+}
+
+// ===== ハズレ =====
+function badEnd(choice){
+
+  document.getElementById("ending").innerText =
+    "【ハズレ】" + rand(badMessages);
+
+  document.getElementById("finalLog").innerHTML =
+    history.join("<br>") +
+    "<br><br>→ あなたは「"+choice+"」を選んだ結果、すべてがリセットされた。";
+
+  show("endScreen");
+}
+
+// ===== 特殊 =====
+function handleSpecial(choice){
+  if(choice==="最初に戻る"){
+    start();
+    return true;
+  }
+  if(choice==="ゲームをやめる"){
+    end();
+    return true;
+  }
+  return false;
+}
+
+// ===== 開始 =====
+function start(){
+
+  step = 0;
+  maxStep = 5 + Math.floor(Math.random()*3);
+
+  state = {
+    location:"不明な場所",
+    companion:null,
+    tension:0,
+    mystery:0
+  };
+
+  history = [rand(openings)];
+
+  show("gameScreen");
+  next();
+}
+
+// ===== 進行 =====
+function next(choice){
+
+  if(choice){
+    if(handleSpecial(choice)) return;
+
+    history.push("→ "+choice);
+    history.push("あなたは「"+choice+"」を選んだ。");
+
+    apply(choice);
+  }
+
+  step++;
+
+  const text = generate();
+  history.push(text);
+
+  document.getElementById("scene").innerText = text;
+
+  if(step >= maxStep){
+    end();
+    return;
+  }
+
+  const div = document.getElementById("choices");
+  div.innerHTML="";
+
+  makeChoices().forEach(c=>{
+    const btn=document.createElement("button");
+    btn.innerText=c;
+
+    const isTrap = Math.random()<0.2;
+
+    btn.onclick = ()=>{
+      if(isTrap){
+        history.push("→ "+c);
+        history.push("あなたは「"+c+"」を選んだ。");
+        badEnd(c);
+        return;
+      }
+      next(c);
+    };
+
+    if(isTrap){
+      btn.style.opacity = 0.7;
+    }
+
+    div.appendChild(btn);
+  });
+}
+
+// ===== END =====
+function end(){
+
+  let result="";
+
+  if(state.mystery>6){
+    result="真実に触れてしまったEND";
+  }else if(state.tension>6){
+    result="崩壊したEND";
+  }else if(Math.random()<0.4){
+    result="意味不明END";
+  }else{
+    result="一応帰還END";
+  }
+
+  document.getElementById("ending").innerText="【END】"+result;
+  document.getElementById("finalLog").innerHTML=history.join("<br>");
+
+  show("endScreen");
+}
+
+// ===== リセット =====
+function reset(){
+  show("startScreen");
+}
+</script>
+
+</body>
+</html>
