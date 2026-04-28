@@ -36,31 +36,29 @@ body{
 .active{display:block;opacity:1;}
 
 .card{
-  background:rgba(26, 26, 26, 0.9);
+  background:rgba(20, 20, 20, 0.95);
   padding:25px;
-  border-radius:2px; /* あえて角を尖らせる */
-  border: 1px double #444;
-  box-shadow: 0 0 20px rgba(255,0,0,0.1);
+  border-radius:2px;
+  border: 1px double #555;
+  box-shadow: 0 0 30px rgba(255,0,0,0.15);
 }
 
-/* ===== テキスト演出 ===== */
 #scene{
   font-size:clamp(18px, 5vw, 24px);
   line-height:1.8;
-  text-shadow: 2px 2px 0px #300;
+  text-shadow: 2px 2px 2px #300;
   margin-bottom: 20px;
 }
 
-/* ===== カオスボタン群 ===== */
 #choices{
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 15px;
-  max-height: 60vh;
+  gap: 12px;
+  max-height: 55vh;
   overflow-y: auto;
-  perspective: 500px;
+  padding: 10px;
 }
 
 button{
@@ -68,43 +66,46 @@ button{
   color:#fff;
   cursor:pointer;
   font-weight: bold;
-  transition: transform 0.1s, filter 0.2s;
-  box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+  transition: transform 0.1s, filter 0.2s, background 0.3s;
+  box-shadow: 3px 3px 0px rgba(0,0,0,0.6);
   word-break: break-all;
+  max-width: 250px;
 }
 
 button:hover{
-  filter: brightness(1.5) contrast(1.2);
+  filter: brightness(1.3) contrast(1.2) saturate(1.5);
   z-index: 100;
 }
 
-/* ランダムサイズ用クラス */
-.tiny { padding: 2px 5px; font-size: 9px; opacity: 0.6; }
-.small{ padding:8px 12px; font-size:14px; }
-.medium{ padding:15px 25px; font-size:20px; }
-.large{ padding:30px 50px; font-size:32px; text-transform: uppercase; }
-.gigantic { padding: 50px 80px; font-size: 45px; border: 5px solid red; }
+.tiny { padding: 3px 6px; font-size: 10px; opacity: 0.7; }
+.small{ padding:8px 15px; font-size:14px; }
+.medium{ padding:15px 25px; font-size:19px; }
+.large{ padding:25px 40px; font-size:28px; }
+.gigantic { padding: 40px 60px; font-size: 40px; border: 3px solid #f00; }
 
-/* ===== 結果表示 ===== */
 #finalLog{
-  white-space:pre-line;
-  font-size:13px;
-  color: #aaa;
-  max-height: 300px;
+  font-size:15px;
+  color: #bbb;
+  max-height: 45vh;
   overflow-y: auto;
-  border-top: 1px solid #333;
-  padding-top: 10px;
+  border: 1px solid #333;
+  padding: 15px;
+  line-height: 1.2;
+  letter-spacing: -1.5px;
+  background: #000;
+  word-break: break-all;
 }
 
 .bad-end {
-  color: #ff3333;
-  animation: shake 0.2s infinite;
+  color: #ff4444;
+  animation: shake 0.15s infinite;
+  text-align: center;
 }
 
 @keyframes shake {
   0% { transform: translate(0,0); }
-  25% { transform: translate(2px, 2px); }
-  50% { transform: translate(-2px, -2px); }
+  30% { transform: translate(3px, -2px); }
+  60% { transform: translate(-3px, 2px); }
   100% { transform: translate(0,0); }
 }
 </style>
@@ -113,9 +114,9 @@ button:hover{
 
 <div id="startScreen" class="screen active">
   <div class="card" style="text-align:center;">
-    <h1 style="letter-spacing:10px;">今日の深淵のよしだ</h1>
-    <p>※Ｂボタンを押してねじ込みます</p>
-    <button class="large" style="background:#400; width:100%;" onclick="start()">扉を開く気分</button>
+    <h1 style="letter-spacing:10px; color:#f33;">今日の深淵のよしだ</h1>
+    <p>※Ｂボタンを脳内にねじ込みます</p>
+    <button class="large" style="background:#500; width:100%;" onclick="start()">扉を開く気分</button>
   </div>
 </div>
 
@@ -128,53 +129,69 @@ button:hover{
   <div class="card">
     <h2 id="ending"></h2>
     <div id="finalLog"></div>
-    <button class="medium" style="margin-top:20px; background:#222;" onclick="reset()">いみわからんｗ</button>
+    <button class="medium" style="margin-top:20px; background:#333; width:100%;" onclick="reset()">いみわからんｗ</button>
   </div>
 </div>
 
 <script>
-// --- ストーリーデータ ---
 const openings = [
-  "目が覚めると、自分の指が20本に増えていた。ピアノが弾けそうだ。",
-  "通勤中、隣の男の顔がQRコードに変わった。読み取ると『助けて』と出た。",
-  "朝、鏡を見ると自分が「昨日の夕飯の残り」になっていた。",
-  "世界から『母音』が消えた。皆、不便そうに濁音だけで会話している。",
-  "気づけば、巨大な回転寿司の皿の上に乗って運ばれていた。",
-  "「おめでとう、あなたが今日の生贄です」と近所の犬に祝福された。"
+  "指が20本になったので、キーボードを一度に2台破壊した。",
+  "隣の男の顔がQRコードだったので読み取ったら『前世：わかめ』と出た。",
+  "朝起きたら、自分の体が『巨大なちくわ』になっていた。穴から隣人の夕飯が見える。",
+  "世界から『母音』が消えた。皆が喉を鳴らす音だけで愛を語っている。",
+  "回転寿司の皿に乗って、そのまま第二京浜を爆走した。",
+  "「おめでとう、生贄ランクがゴールドに昇格です」と野良猫に言われた。"
 ];
 
 const texts = [
-  "冷蔵庫が「お前の人生、賞味期限切れだよ」と冷たく言い放った。",
-  "空から大量のブラジャーが降ってきた。気象予報士は『季節外れの慈愛』と呼んでいる。",
-  "ペンギンたちが深刻な顔で、あなたの遺産の配分を多数決で決めている。",
-  "隣で寝ているはずの妻が、ジッパーを下げて中から見知らぬおじさんが出てきた。",
-  "地面が突然、熟れすぎた桃のような質感に変わり、甘ったるい死の匂いがした。",
-  "視界の端で、全裸の老人が時速80kmで並走している。目が離せない。",
-  "影が地面から剥がれ、勝手にコンビニへタバコを買いに行った。",
-  "宇宙の真理が見えた気がしたが、それは単なる『カニカマの裏側』だった。"
+  "冷蔵庫が「お前の人生、解凍に失敗したな」と馬鹿にしてきた。",
+  "空から降ってきた大量のブラジャーを繋ぎ、月へのハシゴを作った。",
+  "ペンギンたちが私の遺産を全額『イカの塩カラ』に投資して溶かした。",
+  "妻の背中のジッパーを開けたら、中から見知らぬ清掃員が出てきて掃除を始めた。",
+  "地面が熟れすぎた桃になった。歩くたびに『ジュプッ』と音がする。",
+  "視界の端で全裸の老人が時速300kmで反復横跳びをしている。もはや光だ。",
+  "影が地面から剥がれ、「自分探しの旅に出る」とメモを残して消えた。",
+  "宇宙の真理は、コンビニおにぎりの裏側にマジックで殴り書きされていた。"
 ];
 
 const badMessages = [
-  "あなたはあまりに正気すぎたため、世界に拒絶された。",
-  "突然、運営によりあなたの魂が『メンテナンス中』になった。",
-  "あなたの存在が、あまりのくだらなさに耐えきれず蒸発した。",
-  "背後から自分自身に刺された。「次はうまくやれよ」と声がした。",
-  "画面の前のあなたが、鼻をほじった瞬間に世界は崩壊した。"
+  "あなたはあまりに純粋すぎた。その透明さが世界を焼き切った。",
+  "運営により、あなたの意識は現在『コインランドリーの乾燥機』として転生中です。",
+  "物語が密度に耐えきれず、自重でブラックホール化した。",
+  "背後から自分に刺された。「悪い、殺意が抑えきれなかった」と自分は笑った。",
+  "あなたが鼻をほじった瞬間、因果律が逆転してあなたが鼻の一部になった。"
 ];
 
 const actions = [
-  "自分の名前を叫びながら逆立ちで歩く",
-  "虚空に向かって「お前の母ちゃんデベソ」と絶叫する",
-  "落ちている湿った食パンを神と崇める",
-  "全力で反復横跳びをして、時空にヒビを入れる",
-  "ペンギンに年収と家庭の事情を尋ねる",
-  "鼻の穴に小指を突っ込み、宇宙と交信する",
-  "自分の影を必死に踏みつけて奴隷にする",
-  "「これは夢だ！」と言いながら隣人を全力でビンタする",
-  "落ちている謎のスイッチを、祈りながら連打する",
-  "自分の記憶をメルカリに出品して、現金化を試みる",
-  "存在を3つに分裂させ、じゃんけんをする",
-  "壁の模様になりきり、200年待機する"
+  // 行動・ギャグ
+  "逆立ちで山手線を一周する", "虚空に「お前の母ちゃんデベソ」と全力で叫ぶ", "湿った食パンで結界を作る",
+  "反復横跳びで分身し、一人で野球チームを作る", "ペンギンにマイナンバーカードの提示を求める",
+  "鼻の穴に小指を挿入し、未来予知を受信する", "影と殴り合いの喧嘩をして負ける",
+  "「これは夢だ！」と叫び、通行人のカツラを剥ぎ取る", "謎のスイッチを連打して近隣の街を停電させる",
+  "記憶をメルカリに出品し、偽物扱いされて通報される", "三つに分裂して一人だけ豪遊する",
+  "壁の模様になりきり、200年分の固定資産税を逃れる", "タンスの角で小指を粉砕し、そのビートで踊る",
+  "宇宙をドラム式洗濯機で丸洗いする", "コンビニ店員に「私の前世はレジ袋でしたか？」と問う",
+  "消火器と熱烈な恋に落ちる", "壁ドンを自分にして、そのまま壁を突き破る",
+  "知らないおじさんと視線が合い、養子縁組の手続きをする", "概念としてのマヨネーズで雪合戦をする",
+  "自分の脳みそを「煮沸消毒」しようとする", "重力を無視して、天井で卵焼きを作る",
+
+  // モノ・概念（名詞）
+  "冷蔵庫", "月極駐車場", "三角定規（15cm）", "湿った軍手", "犬の冷たい鼻", "Wi-Fiの点滅", "但し書きなしの領収書",
+  "中古のシュレッダー", "百葉箱の中の闇", "冷やし中華（年中無休）", "自動改札の拒絶", "賞味期限切れの練りわさび",
+  "低反発枕の復讐", "おじいちゃんの入れ歯", "エスカレーターの下り専用", "昨夜の記憶のカス", "テトラポットのささやき",
+  "誰かの視線が入った紙コップ", "USBメモリ（32MB）", "木彫りのクマ（鮭抜き）", "トイレットペーパーの芯の空洞",
+  "駐車禁止の赤いコーン", "ぬか床の最深部", "10円玉の裏側の不気味な建物", "扇風機の『強』", "マヨネーズの最後に出る空気",
+  "学校のチャイムの残響", "古ぼけたラジカセ", "脱ぎっぱなしの靴下", "使い捨てコンタクトの空容器",
+  "誰もいない公園のブランコ", "深夜のコインランドリーの匂い", "半分に割れた割り箸", "カピカピになった瞬間接着剤",
+
+  // 恋愛・ポエム・支離滅裂
+  "運命の赤いタコ糸", "ドブ水の味がする初恋", "君の瞳に刺さる俺の鼻毛", "光合成による失恋の癒やし",
+  "君のポストを鏡面磨きにする", "ルンバへのプロポーズ", "禁断のアボカド", "抱きしめてバックドロップ",
+  "ハート形の煮干し", "愛という名のサプリメント", "俺の情熱（摂氏3度）", "君の影を踏んで捕食する",
+  "三角形の苦悩", "過去の自分へのストーカー行為", "全裸ネクタイによる儀式", "マントルのジャズ",
+  "ニトリのラグで飛行訓練", "魂のジップロック保存", "時計の針を食べて明日を消す", "よしだの増殖",
+  "素数への怒り", "お前の後ろにいる俺の影", "全自動・絶望配布機", "火曜日の午後2時28分", "概念のサラダ",
+  "名前を失ったよしだ", "虚無の詰め合わせセット", "異次元のポテトサラダ", "毒入りおはぎ", "よしだの逆襲"
 ];
 
 let step, maxStep, history;
@@ -195,9 +212,7 @@ function start(){
 }
 
 function next(choice){
-  if(choice){
-    history.push("▶ " + choice);
-  }
+  if(choice){ history.push(choice); }
 
   step++;
   const currentText = rand(texts);
@@ -206,32 +221,29 @@ function next(choice){
   const sceneEl = document.getElementById("scene");
   sceneEl.innerText = currentText;
 
-  // 終了判定
   if(step >= maxStep){ end(); return; }
 
   const div = document.getElementById("choices");
   div.innerHTML = "";
 
-  // 選択肢の数をランダムに増量
-  let count = 4 + Math.floor(Math.random()*12);
+  // 1〜5個
+  let count = 1 + Math.floor(Math.random()*5);
   let shuffled = [...actions].sort(()=>Math.random()-0.5);
   
   for(let i=0; i<count; i++){
-    const actionText = shuffled[i % shuffled.length];
+    const actionText = shuffled[i];
     const btn = document.createElement("button");
     btn.innerText = actionText;
 
-    // サイズと見た目のカオス化
     const sizes = ["tiny", "small", "medium", "large", "gigantic"];
     btn.classList.add(rand(sizes));
 
-    // ランダムな色と回転
     const hue = Math.random() * 360;
-    btn.style.background = `hsl(${hue}, 60%, 30%)`;
-    btn.style.transform = `rotate(${(Math.random()-0.5)*30}deg) scale(${0.8 + Math.random()*0.4})`;
+    btn.style.background = `hsl(${hue}, 60%, 25%)`;
+    btn.style.transform = `rotate(${(Math.random()-0.5)*25}deg) scale(${0.8 + Math.random()*0.4})`;
     
-    // 罠の判定（見た目では絶対わからない）
-    const isTrap = Math.random() < 0.15;
+    // 罠の判定
+    const isTrap = Math.random() < 0.12;
 
     btn.onclick = () => {
       if(isTrap){
@@ -241,11 +253,11 @@ function next(choice){
       }
     };
 
-    // マウスを乗せるとたまに逃げるギミック（カオス演出）
-    if(Math.random() < 0.3){
+    // 逃げるギミック
+    if(Math.random() < 0.2){
       btn.onmouseover = () => {
-        btn.style.marginLeft = (Math.random()-0.5)*100 + "px";
-        btn.style.marginTop = (Math.random()-0.5)*100 + "px";
+        btn.style.marginLeft = (Math.random()-0.5)*80 + "px";
+        btn.style.marginTop = (Math.random()-0.5)*80 + "px";
       };
     }
 
@@ -254,20 +266,21 @@ function next(choice){
 }
 
 function badEnd(choice){
-  document.body.style.background = "#600";
+  document.body.style.background = "#500";
   setTimeout(()=> document.body.style.background = "#050505", 200);
   
   document.getElementById("ending").innerText = rand(badMessages);
   document.getElementById("ending").classList.add("bad-end");
-  document.getElementById("finalLog").innerHTML = 
-    history.join("<br><br>") + `<br><br><span style="color:yellow;">[異常終了]: '${choice}' を選んだ瞬間にすべてが反転した。</span>`;
+  
+  document.getElementById("finalLog").innerText = history.join("") + choice + "。すべてがよしだの中にねじ切れて溶けた。";
   show("endScreen");
 }
 
 function end(){
-  document.getElementById("ending").innerText = "……おめでとう、あるいは、さようなら。";
+  document.getElementById("ending").innerText = "……よしだの満足。";
   document.getElementById("ending").classList.remove("bad-end");
-  document.getElementById("finalLog").innerHTML = history.join("<br><br>") + "<br><br>【完】 あなたはまだ、そこにいますか？";
+  
+  document.getElementById("finalLog").innerText = history.join("");
   show("endScreen");
 }
 
