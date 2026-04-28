@@ -114,8 +114,8 @@ button:hover{
 
 <div id="startScreen" class="screen active">
   <div class="card" style="text-align:center;">
-    <h1 style="letter-spacing:10px; color:#f33;">今日の深淵のよしだ</h1>
-    <p>※Ｂボタンを脳内にねじ込みます</p>
+    <h1 style="letter-spacing:10px; color:#f33;">今日のよしだ</h1>
+    <p>※Ｂボタンにねじ込みます</p>
     <button class="large" style="background:#500; width:100%;" onclick="start()">扉を開く気分</button>
   </div>
 </div>
@@ -163,7 +163,6 @@ const badMessages = [
 ];
 
 const actions = [
-  // 行動・ギャグ
   "逆立ちで山手線を一周する", "虚空に「お前の母ちゃんデベソ」と全力で叫ぶ", "湿った食パンで結界を作る",
   "反復横跳びで分身し、一人で野球チームを作る", "ペンギンにマイナンバーカードの提示を求める",
   "鼻の穴に小指を挿入し、未来予知を受信する", "影と殴り合いの喧嘩をして負ける",
@@ -174,8 +173,6 @@ const actions = [
   "消火器と熱烈な恋に落ちる", "壁ドンを自分にして、そのまま壁を突き破る",
   "知らないおじさんと視線が合い、養子縁組の手続きをする", "概念としてのマヨネーズで雪合戦をする",
   "自分の脳みそを「煮沸消毒」しようとする", "重力を無視して、天井で卵焼きを作る",
-
-  // モノ・概念（名詞）
   "冷蔵庫", "月極駐車場", "三角定規（15cm）", "湿った軍手", "犬の冷たい鼻", "Wi-Fiの点滅", "但し書きなしの領収書",
   "中古のシュレッダー", "百葉箱の中の闇", "冷やし中華（年中無休）", "自動改札の拒絶", "賞味期限切れの練りわさび",
   "低反発枕の復讐", "おじいちゃんの入れ歯", "エスカレーターの下り専用", "昨夜の記憶のカス", "テトラポットのささやき",
@@ -183,12 +180,10 @@ const actions = [
   "駐車禁止の赤いコーン", "ぬか床の最深部", "10円玉の裏側の不気味な建物", "扇風機の『強』", "マヨネーズの最後に出る空気",
   "学校のチャイムの残響", "古ぼけたラジカセ", "脱ぎっぱなしの靴下", "使い捨てコンタクトの空容器",
   "誰もいない公園のブランコ", "深夜のコインランドリーの匂い", "半分に割れた割り箸", "カピカピになった瞬間接着剤",
-
-  // 恋愛・ポエム・支離滅裂
   "運命の赤いタコ糸", "ドブ水の味がする初恋", "君の瞳に刺さる俺の鼻毛", "光合成による失恋の癒やし",
   "君のポストを鏡面磨きにする", "ルンバへのプロポーズ", "禁断のアボカド", "抱きしめてバックドロップ",
   "ハート形の煮干し", "愛という名のサプリメント", "俺の情熱（摂氏3度）", "君の影を踏んで捕食する",
-  "三角形の苦悩", "過去の自分へのストーカー行為", "全裸ネクタイによる儀式", "マントルのジャズ",
+  "三角形の苦悩", "過去の自分へのストーカー行為", "全裸ネクタイによる儀式", "マんとルのジャズ",
   "ニトリのラグで飛行訓練", "魂のジップロック保存", "時計の針を食べて明日を消す", "よしだの増殖",
   "素数への怒り", "お前の後ろにいる俺の影", "全自動・絶望配布機", "火曜日の午後2時28分", "概念のサラダ",
   "名前を失ったよしだ", "虚無の詰め合わせセット", "異次元のポテトサラダ", "毒入りおはぎ", "よしだの逆襲"
@@ -205,7 +200,8 @@ function show(id){
 
 function start(){
   step=0;
-  maxStep=4 + Math.floor(Math.random()*4);
+  // ここで 1回から7回 のランダムに設定
+  maxStep = 1 + Math.floor(Math.random() * 7); 
   history=[rand(openings)];
   show("gameScreen");
   next();
@@ -226,7 +222,6 @@ function next(choice){
   const div = document.getElementById("choices");
   div.innerHTML = "";
 
-  // 1〜5個
   let count = 1 + Math.floor(Math.random()*5);
   let shuffled = [...actions].sort(()=>Math.random()-0.5);
   
@@ -242,7 +237,6 @@ function next(choice){
     btn.style.background = `hsl(${hue}, 60%, 25%)`;
     btn.style.transform = `rotate(${(Math.random()-0.5)*25}deg) scale(${0.8 + Math.random()*0.4})`;
     
-    // 罠の判定
     const isTrap = Math.random() < 0.12;
 
     btn.onclick = () => {
@@ -253,14 +247,12 @@ function next(choice){
       }
     };
 
-    // 逃げるギミック
     if(Math.random() < 0.2){
       btn.onmouseover = () => {
         btn.style.marginLeft = (Math.random()-0.5)*80 + "px";
         btn.style.marginTop = (Math.random()-0.5)*80 + "px";
       };
     }
-
     div.appendChild(btn);
   }
 }
@@ -268,10 +260,8 @@ function next(choice){
 function badEnd(choice){
   document.body.style.background = "#500";
   setTimeout(()=> document.body.style.background = "#050505", 200);
-  
   document.getElementById("ending").innerText = rand(badMessages);
   document.getElementById("ending").classList.add("bad-end");
-  
   document.getElementById("finalLog").innerText = history.join("") + choice + "。すべてがよしだの中にねじ切れて溶けた。";
   show("endScreen");
 }
@@ -279,7 +269,6 @@ function badEnd(choice){
 function end(){
   document.getElementById("ending").innerText = "……よしだの満足。";
   document.getElementById("ending").classList.remove("bad-end");
-  
   document.getElementById("finalLog").innerText = history.join("");
   show("endScreen");
 }
