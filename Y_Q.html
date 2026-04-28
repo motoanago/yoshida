@@ -2,53 +2,77 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>カオスストーリー完全版</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>カオスストーリー</title>
+
 <style>
+:root{
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+
 body{
   margin:0;
-  background:#111;
+  background:#0d0d0d;
   color:#fff;
-  font-family:sans-serif;
+  font-family:-apple-system, sans-serif;
   display:flex;
   justify-content:center;
   align-items:center;
-  height:100vh;
+  min-height:100vh;
+  padding:var(--safe-top) 10px var(--safe-bottom);
 }
 
 .screen{
-  width:90%;
+  width:100%;
   max-width:520px;
   display:none;
   opacity:0;
-  transition:opacity .3s;
+  transition:.3s;
 }
 
-.active{
-  display:block;
-  opacity:1;
-}
+.active{display:block;opacity:1;}
 
 .card{
-  background:#222;
-  padding:20px;
-  border-radius:12px;
-  margin-bottom:20px;
+  background:#1a1a1a;
+  padding:18px;
+  border-radius:14px;
+  margin-bottom:16px;
 }
 
+/* ===== テキスト ===== */
+#scene{
+  font-size:clamp(16px,4vw,20px);
+  line-height:1.7;
+}
+
+/* ===== ボタン ===== */
 button{
   width:100%;
-  padding:12px;
-  margin:6px 0;
-  font-size:15px;
   border:none;
-  border-radius:8px;
-  background:#444;
+  border-radius:12px;
+  background:#333;
   color:#fff;
   cursor:pointer;
+  transition:.15s;
 }
 
-button:hover{background:#666;}
+/* サイズランダム */
+.small{ padding:8px; font-size:13px; }
+.medium{ padding:14px; font-size:16px; }
+.large{ padding:20px; font-size:20px; }
 
+button:active{
+  transform:scale(0.96);
+  background:#555;
+}
+
+#choices{
+  max-height:50vh;
+  overflow-y:auto;
+}
+
+/* ===== 結果 ===== */
 #finalLog{
   white-space:pre-line;
   font-size:14px;
@@ -58,15 +82,13 @@ button:hover{background:#666;}
 </head>
 <body>
 
-<!-- スタート -->
 <div id="startScreen" class="screen active">
   <div class="card">
     <h2>カオスストーリー</h2>
-    <button onclick="start()">開始</button>
+    <button class="large" onclick="start()">開始</button>
   </div>
 </div>
 
-<!-- ゲーム -->
 <div id="gameScreen" class="screen">
   <div class="card">
     <div id="scene"></div>
@@ -74,258 +96,167 @@ button:hover{background:#666;}
   <div id="choices"></div>
 </div>
 
-<!-- 終了 -->
 <div id="endScreen" class="screen">
   <div class="card">
     <h2 id="ending"></h2>
-    <h3>あなたのストーリー</h3>
     <div id="finalLog"></div>
-    <button onclick="reset()">もう一度</button>
+    <button class="medium" onclick="reset()">もう一度</button>
   </div>
 </div>
 
 <script>
-// ===== 軸 =====
-const openings = [
- "あなたは見知らぬ部屋で目を覚ました。",
- "通勤中、世界が止まった。",
- "学校に誰もいない。",
- "逃げ続けている。",
- "知らない通知が届いた。",
- "宇宙船の中にいた。",
- "普通の朝のはずだった。",
- "時間が巻き戻った。",
- "知らない街にいる。",
- "世界が白黒になった。"
+// ===== データ =====
+const openings=[
+"あなたは見知らぬ部屋で目を覚ました。",
+"通勤中、世界が止まった。",
+"学校に誰もいない。",
+"逃げ続けている理由を思い出せない。",
+"宇宙船の中にいた。",
+"時間が巻き戻った。",
+"知らない街にいる。"
 ];
 
-// ===== テキスト =====
-const normal = [
- s=>`${s.location}は静まり返っている。`,
- s=>`${s.companion || "誰か"}の気配がする。`,
- ()=>`何かが起こりそうだ。`
+// ===== 文章 =====
+const texts=[
+"何かがおかしい。",
+"視線を感じる。",
+"この出来事は前にもあった気がする。",
+"ペンギンが議論しているが内容は重要そうだ。",
+"冷蔵庫がこちらを否定した。",
+"意味だけが存在している。",
+"あなたの選択が遅れて現実に反映される。",
+"誰かが結果を先に知っている。",
+"ここにいる理由を思い出せないまま進んでいる。"
 ];
 
-const weird = [
- ()=>`時間がズレている。`,
- ()=>`同じ感覚が繰り返される。`,
- ()=>`記憶に違和感がある。`
+// ===== ハズレ =====
+const badMessages=[
+"その選択は存在しなかった。",
+"世界が巻き戻った。",
+"すべてが無効化された。",
+"あなたは選ばれる側だった。"
 ];
 
-const chaosText = [
- ()=>`ペンギンが会議を始めた。`,
- ()=>`冷蔵庫がこちらを見ている。`,
- ()=>`現実がバグのように揺れた。`,
- ()=>`意味だけが残り世界が消えた。`,
- ()=>`あなたは突然踊り始めた。`
+// ===== 選択肢大量 =====
+const actions=[
+"声のする方へ進む",
+"違和感の正体を確かめる",
+"何も知らないふりをする",
+"ここに来なかったことにする",
+"時間を巻き戻す",
+"すべてを受け入れる",
+"現実を疑う",
+"自分の記憶を疑う",
+"誰かに話しかける",
+"踊りながら進む",
+"無になる",
+"壁になる",
+"空気と会話する",
+"存在を分裂させる",
+"その場で止まる",
+"目を閉じる",
+"結末を先に考える",
+"この選択をなかったことにする",
+"理由を探す",
+"理由を捨てる"
 ];
 
-// ===== カオス動詞 =====
-const absurd = [
- "踊る","飛びだす","転がる","消える","増える","溶ける",
- "叫びながら回る","逆さまになる","壁になる","時間を食べる",
- "空気と会話する","突然眠る","分裂する","無になる"
-];
-
-// ===== ハズレ文 =====
-const badMessages = [
- "その選択は存在しなかった。",
- "世界が巻き戻った。",
- "あなたは選ばれる側だった。",
- "すべてが無効化された。",
- "その行動は許されていない。"
-];
-
-function rand(arr){
-  return arr[Math.floor(Math.random()*arr.length)];
-}
+function rand(a){return a[Math.floor(Math.random()*a.length)];}
 
 // ===== 状態 =====
-let state, step, maxStep, history;
+let step,maxStep,history;
 
 // ===== 画面 =====
 function show(id){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
-
-// ===== 文章 =====
-function generate(){
-
-  if(Math.random()<0.03){
-    return "あなたは今ゲームをしていることに気づいた。";
-  }
-
-  const r = Math.random();
-  if(r<0.5) return rand(normal)(state);
-  if(r<0.8) return rand(weird)();
-  return rand(chaosText)();
-}
-
-// ===== 選択肢 =====
-function makeChoices(){
-
-  const normal = ["進む","戻る","調べる","話す","逃げる"];
-  const soft = ["少し待つ","様子を見る","気にしない"];
-  const chaos = ["祈る","壊す","食べる","叫ぶ","観察する","記録する","笑う"];
-  const meta = ["最初に戻る","ゲームをやめる"];
-
-  let result = [];
-  let count = 1 + Math.floor(Math.random()*7);
-
-  result.push(rand(normal));
-
-  const pool = [...normal, ...soft, ...chaos, ...absurd];
-
-  while(result.length < count){
-    const r = rand(pool);
-    if(!result.includes(r)) result.push(r);
-  }
-
-  if(Math.random()<0.25){
-    result.push(rand(meta));
-  }
-
-  return result.sort(()=>Math.random()-0.5);
-}
-
-// ===== 状態変化 =====
-function apply(choice){
-
-  if(choice.includes("進む")) state.location="奥";
-  if(choice.includes("戻る")) state.location="元";
-  if(choice.includes("調べる")) state.mystery+=2;
-  if(choice.includes("話す")) state.companion="謎の人物";
-  if(choice.includes("逃げる")) state.tension+=2;
-
-  if(choice.includes("踊る")) state.tension++;
-  if(choice.includes("飛び")) state.tension+=2;
-  if(choice.includes("消える")) state.mystery+=3;
-  if(choice.includes("分裂")) state.tension+=3;
-  if(choice.includes("無になる")) state.mystery+=5;
-}
-
-// ===== ハズレ =====
-function badEnd(choice){
-
-  document.getElementById("ending").innerText =
-    "【ハズレ】" + rand(badMessages);
-
-  document.getElementById("finalLog").innerHTML =
-    history.join("<br>") +
-    "<br><br>→ あなたは「"+choice+"」を選んだ結果、すべてがリセットされた。";
-
-  show("endScreen");
-}
-
-// ===== 特殊 =====
-function handleSpecial(choice){
-  if(choice==="最初に戻る"){
-    start();
-    return true;
-  }
-  if(choice==="ゲームをやめる"){
-    end();
-    return true;
-  }
-  return false;
+ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
 }
 
 // ===== 開始 =====
 function start(){
+ step=0;
+ maxStep=5+Math.floor(Math.random()*3);
+ history=[rand(openings)];
+ show("gameScreen");
+ next();
+}
 
-  step = 0;
-  maxStep = 5 + Math.floor(Math.random()*3);
+// ===== サイズランダム =====
+function randomSize(){
+ const sizes=["small","medium","large"];
+ return rand(sizes);
+}
 
-  state = {
-    location:"不明な場所",
-    companion:null,
-    tension:0,
-    mystery:0
-  };
-
-  history = [rand(openings)];
-
-  show("gameScreen");
-  next();
+// ===== 選択生成 =====
+function makeChoices(){
+ let count=2+Math.floor(Math.random()*8); // 最大増量
+ let shuffled=[...actions].sort(()=>Math.random()-0.5);
+ return shuffled.slice(0,count);
 }
 
 // ===== 進行 =====
 function next(choice){
 
-  if(choice){
-    if(handleSpecial(choice)) return;
+ if(choice){
+  history.push("→ "+choice);
+  history.push("あなたは「"+choice+"」を選んだ。");
+ }
 
-    history.push("→ "+choice);
-    history.push("あなたは「"+choice+"」を選んだ。");
+ step++;
 
-    apply(choice);
-  }
+ const text=rand(texts);
+ history.push(text);
 
-  step++;
+ document.getElementById("scene").innerText=text;
 
-  const text = generate();
-  history.push(text);
+ if(step>=maxStep){end();return;}
 
-  document.getElementById("scene").innerText = text;
+ const div=document.getElementById("choices");
+ div.innerHTML="";
 
-  if(step >= maxStep){
-    end();
-    return;
-  }
+ makeChoices().forEach(c=>{
+  const btn=document.createElement("button");
+  btn.innerText=c;
 
-  const div = document.getElementById("choices");
-  div.innerHTML="";
+  // サイズカオス
+  btn.classList.add(randomSize());
 
-  makeChoices().forEach(c=>{
-    const btn=document.createElement("button");
-    btn.innerText=c;
+  // ハズレ
+  const trap=Math.random()<0.2;
 
-    const isTrap = Math.random()<0.2;
-
-    btn.onclick = ()=>{
-      if(isTrap){
-        history.push("→ "+c);
-        history.push("あなたは「"+c+"」を選んだ。");
-        badEnd(c);
-        return;
-      }
-      next(c);
-    };
-
-    if(isTrap){
-      btn.style.opacity = 0.7;
+  btn.onclick=()=>{
+    if(trap){
+      badEnd(c);
+      return;
     }
+    next(c);
+  };
 
-    div.appendChild(btn);
-  });
+  if(trap){
+    btn.style.opacity=0.7;
+  }
+
+  div.appendChild(btn);
+ });
+}
+
+// ===== ハズレ =====
+function badEnd(choice){
+ document.getElementById("ending").innerText=rand(badMessages);
+ document.getElementById("finalLog").innerHTML=
+ history.join("<br>")+"<br><br>→ '"+choice+"' によりすべてがリセットされた";
+ show("endScreen");
 }
 
 // ===== END =====
 function end(){
-
-  let result="";
-
-  if(state.mystery>6){
-    result="真実に触れてしまったEND";
-  }else if(state.tension>6){
-    result="崩壊したEND";
-  }else if(Math.random()<0.4){
-    result="意味不明END";
-  }else{
-    result="一応帰還END";
-  }
-
-  document.getElementById("ending").innerText="【END】"+result;
-  document.getElementById("finalLog").innerHTML=history.join("<br>");
-
-  show("endScreen");
+ document.getElementById("ending").innerText="……";
+ document.getElementById("finalLog").innerHTML=history.join("<br>");
+ show("endScreen");
 }
 
 // ===== リセット =====
-function reset(){
-  show("startScreen");
-}
+function reset(){show("startScreen");}
 </script>
 
 </body>
