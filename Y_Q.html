@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>カオスストーリー</title>
+<title>究極のカオスストーリー</title>
 
 <style>
 :root{
@@ -13,86 +13,114 @@
 
 body{
   margin:0;
-  background:#0d0d0d;
-  color:#fff;
-  font-family:-apple-system, sans-serif;
+  background:#050505;
+  color:#eee;
+  font-family:"Courier New", "Hiragino Mincho ProN", serif;
   display:flex;
   justify-content:center;
   align-items:center;
   min-height:100vh;
-  padding:var(--safe-top) 10px var(--safe-bottom);
+  overflow:hidden;
 }
 
 .screen{
   width:100%;
-  max-width:520px;
+  max-width:600px;
   display:none;
   opacity:0;
-  transition:.3s;
+  transition: opacity 0.5s;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .active{display:block;opacity:1;}
 
 .card{
-  background:#1a1a1a;
-  padding:18px;
-  border-radius:14px;
-  margin-bottom:16px;
+  background:rgba(26, 26, 26, 0.9);
+  padding:25px;
+  border-radius:2px; /* あえて角を尖らせる */
+  border: 1px double #444;
+  box-shadow: 0 0 20px rgba(255,0,0,0.1);
 }
 
-/* ===== テキスト ===== */
+/* ===== テキスト演出 ===== */
 #scene{
-  font-size:clamp(16px,4vw,20px);
-  line-height:1.7;
+  font-size:clamp(18px, 5vw, 24px);
+  line-height:1.8;
+  text-shadow: 2px 2px 0px #300;
+  margin-bottom: 20px;
 }
 
-/* ===== ボタン ===== */
+/* ===== カオスボタン群 ===== */
+#choices{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  max-height: 60vh;
+  overflow-y: auto;
+  perspective: 500px;
+}
+
 button{
-  width:100%;
-  border:none;
-  border-radius:12px;
-  background:#333;
+  border: none;
   color:#fff;
   cursor:pointer;
-  transition:.15s;
+  font-weight: bold;
+  transition: transform 0.1s, filter 0.2s;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+  word-break: break-all;
 }
 
-/* サイズランダム */
-.small{ padding:8px; font-size:13px; }
-.medium{ padding:14px; font-size:16px; }
-.large{ padding:20px; font-size:20px; }
-
-button:active{
-  transform:scale(0.96);
-  background:#555;
+button:hover{
+  filter: brightness(1.5) contrast(1.2);
+  z-index: 100;
 }
 
-#choices{
-  max-height:50vh;
-  overflow-y:auto;
-}
+/* ランダムサイズ用クラス */
+.tiny { padding: 2px 5px; font-size: 9px; opacity: 0.6; }
+.small{ padding:8px 12px; font-size:14px; }
+.medium{ padding:15px 25px; font-size:20px; }
+.large{ padding:30px 50px; font-size:32px; text-transform: uppercase; }
+.gigantic { padding: 50px 80px; font-size: 45px; border: 5px solid red; }
 
-/* ===== 結果 ===== */
+/* ===== 結果表示 ===== */
 #finalLog{
   white-space:pre-line;
-  font-size:14px;
-  line-height:1.6;
+  font-size:13px;
+  color: #aaa;
+  max-height: 300px;
+  overflow-y: auto;
+  border-top: 1px solid #333;
+  padding-top: 10px;
+}
+
+.bad-end {
+  color: #ff3333;
+  animation: shake 0.2s infinite;
+}
+
+@keyframes shake {
+  0% { transform: translate(0,0); }
+  25% { transform: translate(2px, 2px); }
+  50% { transform: translate(-2px, -2px); }
+  100% { transform: translate(0,0); }
 }
 </style>
 </head>
 <body>
 
 <div id="startScreen" class="screen active">
-  <div class="card">
-    <h2>カオスストーリー</h2>
-    <button class="large" onclick="start()">開始</button>
+  <div class="card" style="text-align:center;">
+    <h1 style="letter-spacing:10px;">深淵の対話</h1>
+    <p>※あなたの正気は保証されません</p>
+    <button class="large" style="background:#400; width:100%;" onclick="start()">扉を開く</button>
   </div>
 </div>
 
 <div id="gameScreen" class="screen">
-  <div class="card">
-    <div id="scene"></div>
-  </div>
+  <div id="scene" class="card"></div>
   <div id="choices"></div>
 </div>
 
@@ -100,163 +128,153 @@ button:active{
   <div class="card">
     <h2 id="ending"></h2>
     <div id="finalLog"></div>
-    <button class="medium" onclick="reset()">もう一度</button>
+    <button class="medium" style="margin-top:20px; background:#222;" onclick="reset()">輪廻に戻る</button>
   </div>
 </div>
 
 <script>
-// ===== データ =====
-const openings=[
-"あなたは見知らぬ部屋で目を覚ました。",
-"通勤中、世界が止まった。",
-"学校に誰もいない。",
-"逃げ続けている理由を思い出せない。",
-"宇宙船の中にいた。",
-"時間が巻き戻った。",
-"知らない街にいる。"
+// --- ストーリーデータ ---
+const openings = [
+  "目が覚めると、自分の指が20本に増えていた。ピアノが弾けそうだ。",
+  "通勤中、隣の男の顔がQRコードに変わった。読み取ると『助けて』と出た。",
+  "朝、鏡を見ると自分が「昨日の夕飯の残り」になっていた。",
+  "世界から『母音』が消えた。皆、不便そうに濁音だけで会話している。",
+  "気づけば、巨大な回転寿司の皿の上に乗って運ばれていた。",
+  "「おめでとう、あなたが今日の生贄です」と近所の犬に祝福された。"
 ];
 
-// ===== 文章 =====
-const texts=[
-"何かがおかしい。",
-"視線を感じる。",
-"この出来事は前にもあった気がする。",
-"ペンギンが議論しているが内容は重要そうだ。",
-"冷蔵庫がこちらを否定した。",
-"意味だけが存在している。",
-"あなたの選択が遅れて現実に反映される。",
-"誰かが結果を先に知っている。",
-"ここにいる理由を思い出せないまま進んでいる。"
+const texts = [
+  "冷蔵庫が「お前の人生、賞味期限切れだよ」と冷たく言い放った。",
+  "空から大量のブラジャーが降ってきた。気象予報士は『季節外れの慈愛』と呼んでいる。",
+  "ペンギンたちが深刻な顔で、あなたの遺産の配分を多数決で決めている。",
+  "隣で寝ているはずの妻が、ジッパーを下げて中から見知らぬおじさんが出てきた。",
+  "地面が突然、熟れすぎた桃のような質感に変わり、甘ったるい死の匂いがした。",
+  "視界の端で、全裸の老人が時速80kmで並走している。目が離せない。",
+  "影が地面から剥がれ、勝手にコンビニへタバコを買いに行った。",
+  "宇宙の真理が見えた気がしたが、それは単なる『カニカマの裏側』だった。"
 ];
 
-// ===== ハズレ =====
-const badMessages=[
-"その選択は存在しなかった。",
-"世界が巻き戻った。",
-"すべてが無効化された。",
-"あなたは選ばれる側だった。"
+const badMessages = [
+  "あなたはあまりに正気すぎたため、世界に拒絶された。",
+  "突然、運営によりあなたの魂が『メンテナンス中』になった。",
+  "あなたの存在が、あまりのくだらなさに耐えきれず蒸発した。",
+  "背後から自分自身に刺された。「次はうまくやれよ」と声がした。",
+  "画面の前のあなたが、鼻をほじった瞬間に世界は崩壊した。"
 ];
 
-// ===== 選択肢大量 =====
-const actions=[
-"声のする方へ進む",
-"違和感の正体を確かめる",
-"何も知らないふりをする",
-"ここに来なかったことにする",
-"時間を巻き戻す",
-"すべてを受け入れる",
-"現実を疑う",
-"自分の記憶を疑う",
-"誰かに話しかける",
-"踊りながら進む",
-"無になる",
-"壁になる",
-"空気と会話する",
-"存在を分裂させる",
-"その場で止まる",
-"目を閉じる",
-"結末を先に考える",
-"この選択をなかったことにする",
-"理由を探す",
-"理由を捨てる"
+const actions = [
+  "自分の名前を叫びながら逆立ちで歩く",
+  "虚空に向かって「お前の母ちゃんデベソ」と絶叫する",
+  "落ちている湿った食パンを神と崇める",
+  "全力で反復横跳びをして、時空にヒビを入れる",
+  "ペンギンに年収と家庭の事情を尋ねる",
+  "鼻の穴に小指を突っ込み、宇宙と交信する",
+  "自分の影を必死に踏みつけて奴隷にする",
+  "「これは夢だ！」と言いながら隣人を全力でビンタする",
+  "落ちている謎のスイッチを、祈りながら連打する",
+  "自分の記憶をメルカリに出品して、現金化を試みる",
+  "存在を3つに分裂させ、じゃんけんをする",
+  "壁の模様になりきり、200年待機する"
 ];
 
-function rand(a){return a[Math.floor(Math.random()*a.length)];}
+let step, maxStep, history;
 
-// ===== 状態 =====
-let step,maxStep,history;
+function rand(a){ return a[Math.floor(Math.random()*a.length)]; }
 
-// ===== 画面 =====
 function show(id){
- document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
- document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
 }
 
-// ===== 開始 =====
 function start(){
- step=0;
- maxStep=5+Math.floor(Math.random()*3);
- history=[rand(openings)];
- show("gameScreen");
- next();
+  step=0;
+  maxStep=4 + Math.floor(Math.random()*4);
+  history=[rand(openings)];
+  show("gameScreen");
+  next();
 }
 
-// ===== サイズランダム =====
-function randomSize(){
- const sizes=["small","medium","large"];
- return rand(sizes);
-}
-
-// ===== 選択生成 =====
-function makeChoices(){
- let count=2+Math.floor(Math.random()*8); // 最大増量
- let shuffled=[...actions].sort(()=>Math.random()-0.5);
- return shuffled.slice(0,count);
-}
-
-// ===== 進行 =====
 function next(choice){
-
- if(choice){
-  history.push("→ "+choice);
-  history.push("あなたは「"+choice+"」を選んだ。");
- }
-
- step++;
-
- const text=rand(texts);
- history.push(text);
-
- document.getElementById("scene").innerText=text;
-
- if(step>=maxStep){end();return;}
-
- const div=document.getElementById("choices");
- div.innerHTML="";
-
- makeChoices().forEach(c=>{
-  const btn=document.createElement("button");
-  btn.innerText=c;
-
-  // サイズカオス
-  btn.classList.add(randomSize());
-
-  // ハズレ
-  const trap=Math.random()<0.2;
-
-  btn.onclick=()=>{
-    if(trap){
-      badEnd(c);
-      return;
-    }
-    next(c);
-  };
-
-  if(trap){
-    btn.style.opacity=0.7;
+  if(choice){
+    history.push("▶ " + choice);
   }
 
-  div.appendChild(btn);
- });
+  step++;
+  const currentText = rand(texts);
+  history.push(currentText);
+  
+  const sceneEl = document.getElementById("scene");
+  sceneEl.innerText = currentText;
+
+  // 終了判定
+  if(step >= maxStep){ end(); return; }
+
+  const div = document.getElementById("choices");
+  div.innerHTML = "";
+
+  // 選択肢の数をランダムに増量
+  let count = 4 + Math.floor(Math.random()*12);
+  let shuffled = [...actions].sort(()=>Math.random()-0.5);
+  
+  for(let i=0; i<count; i++){
+    const actionText = shuffled[i % shuffled.length];
+    const btn = document.createElement("button");
+    btn.innerText = actionText;
+
+    // サイズと見た目のカオス化
+    const sizes = ["tiny", "small", "medium", "large", "gigantic"];
+    btn.classList.add(rand(sizes));
+
+    // ランダムな色と回転
+    const hue = Math.random() * 360;
+    btn.style.background = `hsl(${hue}, 60%, 30%)`;
+    btn.style.transform = `rotate(${(Math.random()-0.5)*30}deg) scale(${0.8 + Math.random()*0.4})`;
+    
+    // 罠の判定（見た目では絶対わからない）
+    const isTrap = Math.random() < 0.15;
+
+    btn.onclick = () => {
+      if(isTrap){
+        badEnd(actionText);
+      } else {
+        next(actionText);
+      }
+    };
+
+    // マウスを乗せるとたまに逃げるギミック（カオス演出）
+    if(Math.random() < 0.3){
+      btn.onmouseover = () => {
+        btn.style.marginLeft = (Math.random()-0.5)*100 + "px";
+        btn.style.marginTop = (Math.random()-0.5)*100 + "px";
+      };
+    }
+
+    div.appendChild(btn);
+  }
 }
 
-// ===== ハズレ =====
 function badEnd(choice){
- document.getElementById("ending").innerText=rand(badMessages);
- document.getElementById("finalLog").innerHTML=
- history.join("<br>")+"<br><br>→ '"+choice+"' によりすべてがリセットされた";
- show("endScreen");
+  document.body.style.background = "#600";
+  setTimeout(()=> document.body.style.background = "#050505", 200);
+  
+  document.getElementById("ending").innerText = rand(badMessages);
+  document.getElementById("ending").classList.add("bad-end");
+  document.getElementById("finalLog").innerHTML = 
+    history.join("<br><br>") + `<br><br><span style="color:yellow;">[異常終了]: '${choice}' を選んだ瞬間にすべてが反転した。</span>`;
+  show("endScreen");
 }
 
-// ===== END =====
 function end(){
- document.getElementById("ending").innerText="……";
- document.getElementById("finalLog").innerHTML=history.join("<br>");
- show("endScreen");
+  document.getElementById("ending").innerText = "……おめでとう、あるいは、さようなら。";
+  document.getElementById("ending").classList.remove("bad-end");
+  document.getElementById("finalLog").innerHTML = history.join("<br><br>") + "<br><br>【完】 あなたはまだ、そこにいますか？";
+  show("endScreen");
 }
 
-// ===== リセット =====
-function reset(){show("startScreen");}
+function reset(){
+  document.body.style.background = "#050505";
+  show("startScreen");
+}
 </script>
 
 </body>
